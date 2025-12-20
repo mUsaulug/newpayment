@@ -1,0 +1,21 @@
+server:
+  port: 8443
+  ssl:
+    enabled: true
+
+    key-store: classpath:ssl/acquirer-server.p12
+    key-store-type: PKCS12
+    key-store-password: serverpass
+    key-alias: acquirer-server
+
+    trust-store: classpath:ssl/acquirer-truststore.p12
+    trust-store-type: PKCS12
+    trust-store-password: trustpass
+
+    client-auth: need
+
+security:
+  hmac:
+    secret: "CHANGE_ME_DEV_SECRET_32+CHARS"
+  replay:
+    allowedSkewSeconds: 60

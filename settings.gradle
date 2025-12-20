@@ -1,0 +1,5 @@
+rootProject.name = 'secure-pos-payment-channel'
+
+include 'common'
+include 'acquirer-server'
+include 'pos-client'
