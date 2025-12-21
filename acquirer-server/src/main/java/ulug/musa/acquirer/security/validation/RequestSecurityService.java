@@ -5,12 +5,17 @@ import org.springframework.stereotype.Service;
 import ulug.musa.acquirer.config.SecurityProperties;
 import ulug.musa.acquirer.security.hmac.HmacVerifier;
 import ulug.musa.acquirer.security.replay.NonceStore;
+import ulug.musa.common.security.CanonicalMessageBuilder;
+import ulug.musa.common.util.TimeUtil;
 
 import java.util.Map;
 import java.util.function.LongSupplier;
+import java.util.regex.Pattern;
 
 @Service
 public class RequestSecurityService {
+
+    private static final Pattern NONCE_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{22}$");
 
     private final HmacVerifier hmacVerifier;
     private final NonceStore nonceStore;
@@ -44,6 +49,7 @@ public class RequestSecurityService {
 
         long timestamp = parseTimestamp(tsStr);
         validateSkew(timestamp);
+        validateNonceFormat(nonce);
 
         // Replay kontrol: nonce daha önce kullanıldı mı?
         boolean firstTime = nonceStore.storeIfAbsent(nonce, allowedSkewSeconds);
@@ -51,7 +57,7 @@ public class RequestSecurityService {
             throw new SecurityValidationException(HttpStatus.CONFLICT, "Replay tespit edildi (nonce tekrar kullanıldı)");
         }
 
-        String dataToSign = terminalId + "|" + nonce + "|" + timestamp + "|" + (body == null ? "" : body);
+        String dataToSign = CanonicalMessageBuilder.buildForHeaders(terminalId, nonce, timestamp, body);
 
         if (!hmacVerifier.verify(dataToSign, signature)) {
             throw new SecurityValidationException(HttpStatus.UNAUTHORIZED, "HMAC imzası geçersiz");
@@ -75,10 +81,20 @@ public class RequestSecurityService {
     }
 
     private void validateSkew(long requestTs) {
-        long now = epochSecondsSupplier.getAsLong();
+        long now = nowEpochSeconds();
         long diff = Math.abs(now - requestTs);
         if (diff > allowedSkewSeconds) {
             throw new SecurityValidationException(HttpStatus.UNAUTHORIZED, "Timestamp skew fazla: " + diff + "s");
         }
+    }
+
+    private void validateNonceFormat(String nonce) {
+        if (!NONCE_PATTERN.matcher(nonce).matches()) {
+            throw new SecurityValidationException(HttpStatus.BAD_REQUEST, "Nonce formatı geçersiz (NonceGenerator ile uyumlu olmalı)");
+        }
+    }
+
+    private long nowEpochSeconds() {
+        return epochSecondsSupplier == null ? TimeUtil.nowEpochSeconds() : epochSecondsSupplier.getAsLong();
     }
 }

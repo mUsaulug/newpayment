@@ -4,7 +4,6 @@ import ulug.musa.common.security.HmacUtil;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 
 public class HmacVerifier {
 
@@ -24,14 +23,6 @@ public class HmacVerifier {
     }
 
     public boolean verify(String data, String base64Signature) {
-        if (base64Signature == null || base64Signature.isBlank()) return false;
-
-        String expected = sign(data);
-
-        // timing-attack'e daha dayanıklı karşılaştırma
-        return MessageDigest.isEqual(
-                expected.getBytes(charset),
-                base64Signature.getBytes(charset)
-        );
+        return HmacUtil.verify(secret, data, base64Signature, charset);
     }
 }
