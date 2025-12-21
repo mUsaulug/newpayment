@@ -24,7 +24,7 @@ public class SecurityBeansConfig {
     }
 
     @Bean
-    public NonceStore nonceStore(LongSupplier epochSecondsSupplier) {
-        return new InMemoryNonceStore(epochSecondsSupplier);
+    public NonceStore nonceStore(LongSupplier epochSecondsSupplier, SecurityProperties securityProperties) {
+        return new InMemoryNonceStore(epochSecondsSupplier, securityProperties.replay().nonceCleanupIntervalSeconds());
     }
 }
