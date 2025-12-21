@@ -1,31 +1,26 @@
 package ulug.musa.acquirer.security.hmac;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
+import ulug.musa.common.security.HmacUtil;
+
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.util.Base64;
 
 public class HmacVerifier {
 
-    private final byte[] secretBytes;
+    private final String secret;
+    private final Charset charset;
 
-    public HmacVerifier(String secret) {
+    public HmacVerifier(String secret, Charset charset) {
         if (secret == null || secret.isBlank()) {
             throw new IllegalArgumentException("HMAC secret boş olamaz");
         }
-        this.secretBytes = secret.getBytes(StandardCharsets.UTF_8);
+        this.secret = secret;
+        this.charset = charset == null ? StandardCharsets.UTF_8 : charset;
     }
 
     public String sign(String data) {
-        try {
-            Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(secretBytes, "HmacSHA256"));
-            byte[] raw = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-            return Base64.getUrlEncoder().withoutPadding().encodeToString(raw);
-        } catch (Exception e) {
-            throw new IllegalStateException("HMAC hesaplanamadı", e);
-        }
+        return HmacUtil.sign(secret, data, charset);
     }
 
     public boolean verify(String data, String base64Signature) {
@@ -35,8 +30,8 @@ public class HmacVerifier {
 
         // timing-attack'e daha dayanıklı karşılaştırma
         return MessageDigest.isEqual(
-                expected.getBytes(StandardCharsets.UTF_8),
-                base64Signature.getBytes(StandardCharsets.UTF_8)
+                expected.getBytes(charset),
+                base64Signature.getBytes(charset)
         );
     }
 }

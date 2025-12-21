@@ -3,12 +3,11 @@ package ulug.musa.acquirer.security.validation;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import ulug.musa.acquirer.config.SecurityProperties;
-import ulug.musa.acquirer.security.SecurityHeaders;
 import ulug.musa.acquirer.security.hmac.HmacVerifier;
 import ulug.musa.acquirer.security.replay.NonceStore;
 
-import java.time.Instant;
 import java.util.Map;
+import java.util.function.LongSupplier;
 
 @Service
 public class RequestSecurityService {
@@ -16,11 +15,15 @@ public class RequestSecurityService {
     private final HmacVerifier hmacVerifier;
     private final NonceStore nonceStore;
     private final long allowedSkewSeconds;
+    private final SecurityProperties.Headers headers;
+    private final LongSupplier epochSecondsSupplier;
 
-    public RequestSecurityService(SecurityProperties props, NonceStore nonceStore) {
-        this.hmacVerifier = new HmacVerifier(props.hmac().secret());
+    public RequestSecurityService(SecurityProperties props, NonceStore nonceStore, HmacVerifier hmacVerifier, LongSupplier epochSecondsSupplier) {
+        this.hmacVerifier = hmacVerifier;
         this.nonceStore = nonceStore;
         this.allowedSkewSeconds = props.replay().allowedSkewSeconds();
+        this.headers = props.headers();
+        this.epochSecondsSupplier = epochSecondsSupplier;
     }
 
     /**
@@ -34,10 +37,10 @@ public class RequestSecurityService {
      * terminalId|nonce|timestamp|body
      */
     public void validate(Map<String, String> headers, String body) {
-        String terminalId = mustGet(headers, SecurityHeaders.TERMINAL_ID);
-        String nonce = mustGet(headers, SecurityHeaders.NONCE);
-        String tsStr = mustGet(headers, SecurityHeaders.TIMESTAMP);
-        String signature = mustGet(headers, SecurityHeaders.SIGNATURE);
+        String terminalId = mustGet(headers, this.headers.terminalId());
+        String nonce = mustGet(headers, this.headers.nonce());
+        String tsStr = mustGet(headers, this.headers.timestamp());
+        String signature = mustGet(headers, this.headers.signature());
 
         long timestamp = parseTimestamp(tsStr);
         validateSkew(timestamp);
@@ -67,12 +70,12 @@ public class RequestSecurityService {
         try {
             return Long.parseLong(ts);
         } catch (NumberFormatException e) {
-            throw new SecurityValidationException(HttpStatus.BAD_REQUEST, "X-Timestamp sayısal olmalı (epoch seconds)");
+            throw new SecurityValidationException(HttpStatus.BAD_REQUEST, this.headers.timestamp() + " sayısal olmalı (epoch seconds)");
         }
     }
 
     private void validateSkew(long requestTs) {
-        long now = Instant.now().getEpochSecond();
+        long now = epochSecondsSupplier.getAsLong();
         long diff = Math.abs(now - requestTs);
         if (diff > allowedSkewSeconds) {
             throw new SecurityValidationException(HttpStatus.UNAUTHORIZED, "Timestamp skew fazla: " + diff + "s");
