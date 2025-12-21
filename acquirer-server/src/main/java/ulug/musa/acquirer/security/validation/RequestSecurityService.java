@@ -37,6 +37,13 @@ public class RequestSecurityService extends ulug.musa.common.security.RequestSec
         validatePaymentRequest(request);
     }
 
+    /**
+     * Header doğrulaması filtrede yapılmışsa, nonce tekrar kullanım kontrolü bu adımda atlanmalıdır.
+     */
+    public void validateAfterHeaders(PaymentRequest request) {
+        validatePaymentRequest(request, false);
+    }
+
     @Override
     protected boolean isNonceFresh(String nonce) {
         return nonceStore.storeIfAbsent(nonce, allowedSkewSeconds);

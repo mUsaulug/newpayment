@@ -59,6 +59,10 @@ public class RequestSecurityService {
     }
 
     public void validatePaymentRequest(PaymentRequest request) {
+        validatePaymentRequest(request, true);
+    }
+
+    public void validatePaymentRequest(PaymentRequest request, boolean validateReplay) {
         if (request == null) {
             handleError(ValidationErrorType.BAD_REQUEST, "İstek body boş");
             return;
@@ -85,7 +89,9 @@ public class RequestSecurityService {
 
         validateSkew(request.getTimestamp());
         validateNonceFormat(request.getNonce());
-        validateReplay(request.getNonce());
+        if (validateReplay) {
+            validateReplay(request.getNonce());
+        }
 
         String dataToSign = CanonicalMessageBuilder.buildForSignature(request);
         ensureSignatureValid(dataToSign, request.getSignature());
