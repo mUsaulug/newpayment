@@ -24,7 +24,7 @@ public class PaymentController {
 
     @PostMapping
     public PaymentResponse pay(@RequestBody PaymentRequest request) {
-        requestSecurityService.validate(request);
+        requestSecurityService.validateAfterHeaders(request);
 
         return new PaymentResponse(
                 request.getTraceId(),
