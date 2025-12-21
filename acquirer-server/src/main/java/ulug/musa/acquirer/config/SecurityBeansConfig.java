@@ -2,7 +2,6 @@ package ulug.musa.acquirer.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import ulug.musa.acquirer.security.hmac.HmacVerifier;
 import ulug.musa.acquirer.security.replay.InMemoryNonceStore;
 import ulug.musa.acquirer.security.replay.NonceStore;
 import ulug.musa.common.util.NonceGenerator;
@@ -27,10 +26,5 @@ public class SecurityBeansConfig {
     @Bean
     public NonceStore nonceStore(LongSupplier epochSecondsSupplier) {
         return new InMemoryNonceStore(epochSecondsSupplier);
-    }
-
-    @Bean
-    public HmacVerifier hmacVerifier(SecurityProperties properties) {
-        return new HmacVerifier(properties.hmac().secret(), properties.hmac().charset());
     }
 }

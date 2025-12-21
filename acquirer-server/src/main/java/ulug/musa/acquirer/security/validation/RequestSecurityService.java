@@ -3,11 +3,12 @@ package ulug.musa.acquirer.security.validation;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import ulug.musa.acquirer.config.SecurityProperties;
-import ulug.musa.acquirer.security.hmac.HmacVerifier;
 import ulug.musa.acquirer.security.replay.NonceStore;
 import ulug.musa.common.security.CanonicalMessageBuilder;
+import ulug.musa.common.security.HmacUtil;
 import ulug.musa.common.util.TimeUtil;
 
+import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.function.LongSupplier;
 import java.util.regex.Pattern;
@@ -17,14 +18,16 @@ public class RequestSecurityService {
 
     private static final Pattern NONCE_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{22}$");
 
-    private final HmacVerifier hmacVerifier;
+    private final String hmacSecret;
+    private final Charset hmacCharset;
     private final NonceStore nonceStore;
     private final long allowedSkewSeconds;
     private final SecurityProperties.Headers headers;
     private final LongSupplier epochSecondsSupplier;
 
-    public RequestSecurityService(SecurityProperties props, NonceStore nonceStore, HmacVerifier hmacVerifier, LongSupplier epochSecondsSupplier) {
-        this.hmacVerifier = hmacVerifier;
+    public RequestSecurityService(SecurityProperties props, NonceStore nonceStore, LongSupplier epochSecondsSupplier) {
+        this.hmacSecret = props.hmac().secret();
+        this.hmacCharset = props.hmac().charset();
         this.nonceStore = nonceStore;
         this.allowedSkewSeconds = props.replay().allowedSkewSeconds();
         this.headers = props.headers();
@@ -59,7 +62,7 @@ public class RequestSecurityService {
 
         String dataToSign = CanonicalMessageBuilder.buildForHeaders(terminalId, nonce, timestamp, body);
 
-        if (!hmacVerifier.verify(dataToSign, signature)) {
+        if (!HmacUtil.verify(hmacSecret, dataToSign, signature, hmacCharset)) {
             throw new SecurityValidationException(HttpStatus.UNAUTHORIZED, "HMAC imzası geçersiz");
         }
     }
