@@ -16,7 +16,7 @@ public record SecurityProperties(
     public SecurityProperties {
         Objects.requireNonNull(hmac, "security.hmac ayarları zorunlu");
         if (replay == null) {
-            replay = new Replay(120L);
+            replay = new Replay(120L, 60L);
         }
         if (headers == null) {
             headers = Headers.defaults();
@@ -32,13 +32,16 @@ public record SecurityProperties(
         }
     }
 
-    public record Replay(Long allowedSkewSeconds) {
+    public record Replay(Long allowedSkewSeconds, Long nonceCleanupIntervalSeconds) {
         public Replay {
             if (allowedSkewSeconds == null) {
                 throw new IllegalArgumentException("security.replay.allowedSkewSeconds gerekli");
             }
             if (allowedSkewSeconds <= 0) {
                 throw new IllegalArgumentException("security.replay.allowedSkewSeconds 0'dan büyük olmalı");
+            }
+            if (nonceCleanupIntervalSeconds == null || nonceCleanupIntervalSeconds <= 0) {
+                nonceCleanupIntervalSeconds = 60L;
             }
         }
     }
