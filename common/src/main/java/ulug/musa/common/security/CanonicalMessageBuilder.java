@@ -29,6 +29,16 @@ public final class CanonicalMessageBuilder {
                 r.getKeyVersion();
     }
 
+    /**
+     * Header + gövde imzası için ortak canonical format.
+     */
+    public static String buildForHeaders(String terminalId, String nonce, long timestamp, String body) {
+        return safe(terminalId) + "|" +
+                safe(nonce) + "|" +
+                timestamp + "|" +
+                (body == null ? "" : body);
+    }
+
     private static String safe(String s) {
         return s == null ? "" : s.trim();
     }
