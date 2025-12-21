@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import ulug.musa.acquirer.security.SecurityHeaders;
+import ulug.musa.common.security.SecurityHeaders;
 import ulug.musa.acquirer.security.validation.RequestSecurityService;
 import ulug.musa.acquirer.security.validation.SecurityExceptionHandler;
 import ulug.musa.acquirer.security.validation.SecurityValidationException;

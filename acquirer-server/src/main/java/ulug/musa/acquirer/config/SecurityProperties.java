@@ -1,7 +1,7 @@
 package ulug.musa.acquirer.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import ulug.musa.acquirer.security.SecurityHeaders;
+import ulug.musa.common.security.SecurityHeaders;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
