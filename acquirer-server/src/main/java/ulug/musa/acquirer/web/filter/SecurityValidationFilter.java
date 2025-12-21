@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import ulug.musa.common.security.SecurityHeaders;
+import ulug.musa.acquirer.config.SecurityProperties;
 import ulug.musa.acquirer.security.validation.RequestSecurityService;
 import ulug.musa.acquirer.security.validation.SecurityExceptionHandler;
 import ulug.musa.acquirer.security.validation.SecurityValidationException;
@@ -20,11 +20,14 @@ public class SecurityValidationFilter extends OncePerRequestFilter {
 
     private final RequestSecurityService securityService;
     private final SecurityExceptionHandler exceptionHandler;
+    private final SecurityProperties.Headers headers;
 
     public SecurityValidationFilter(RequestSecurityService securityService,
-                                    SecurityExceptionHandler exceptionHandler) {
+                                    SecurityExceptionHandler exceptionHandler,
+                                    SecurityProperties securityProperties) {
         this.securityService = securityService;
         this.exceptionHandler = exceptionHandler;
+        this.headers = securityProperties.headers();
     }
 
     @Override
@@ -43,10 +46,10 @@ public class SecurityValidationFilter extends OncePerRequestFilter {
         CachedBodyHttpServletRequest wrapped = new CachedBodyHttpServletRequest(request);
 
         Map<String, String> headers = new HashMap<>();
-        headers.put(SecurityHeaders.TERMINAL_ID, request.getHeader(SecurityHeaders.TERMINAL_ID));
-        headers.put(SecurityHeaders.NONCE, request.getHeader(SecurityHeaders.NONCE));
-        headers.put(SecurityHeaders.TIMESTAMP, request.getHeader(SecurityHeaders.TIMESTAMP));
-        headers.put(SecurityHeaders.SIGNATURE, request.getHeader(SecurityHeaders.SIGNATURE));
+        headers.put(this.headers.terminalId(), wrapped.getHeader(this.headers.terminalId()));
+        headers.put(this.headers.nonce(), wrapped.getHeader(this.headers.nonce()));
+        headers.put(this.headers.timestamp(), wrapped.getHeader(this.headers.timestamp()));
+        headers.put(this.headers.signature(), wrapped.getHeader(this.headers.signature()));
 
         String body = wrapped.bodyAsString();
 
@@ -55,7 +58,7 @@ public class SecurityValidationFilter extends OncePerRequestFilter {
             filterChain.doFilter(wrapped, response);
         } catch (SecurityValidationException e) {
             // Eksik header / invalid signature vb. -> 4xx dön
-            exceptionHandler.write(response, 400, "SEC_VALIDATION_FAILED", e.getMessage());
+            exceptionHandler.write(response, e.status().value(), "SEC_VALIDATION_FAILED", e.getMessage());
         }
     }
 }
