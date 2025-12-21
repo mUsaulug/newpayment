@@ -3,20 +3,31 @@ package ulug.musa.acquirer.security.validation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import ulug.musa.common.model.ErrorResponse;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
-@Component
+@RestControllerAdvice
 public class SecurityExceptionHandler {
+
+    public static final String ERROR_CODE = "SEC_VALIDATION_FAILED";
 
     private final ObjectMapper objectMapper;
 
     public SecurityExceptionHandler(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
+    }
+
+    @ExceptionHandler(SecurityValidationException.class)
+    public ResponseEntity<ErrorResponse> handleSecurityValidation(SecurityValidationException exception) {
+        ErrorResponse body = buildBody(exception.status().value(), ERROR_CODE, exception.getMessage());
+        return ResponseEntity.status(exception.status())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body);
     }
 
     public void write(HttpServletResponse response, int status, String code, String message) throws IOException {
@@ -27,13 +38,11 @@ public class SecurityExceptionHandler {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
 
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", Instant.now().toString());
-        body.put("status", status);
-        body.put("code", code);
-        body.put("message", message);
-
-        response.getWriter().write(objectMapper.writeValueAsString(body));
+        response.getWriter().write(objectMapper.writeValueAsString(buildBody(status, code, message)));
         response.flushBuffer();
+    }
+
+    private ErrorResponse buildBody(int status, String code, String message) {
+        return new ErrorResponse(Instant.now().toString(), status, code, message);
     }
 }
