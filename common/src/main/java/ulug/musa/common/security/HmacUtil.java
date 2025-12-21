@@ -2,6 +2,7 @@ package ulug.musa.common.security;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
@@ -21,12 +22,17 @@ public final class HmacUtil {
      * çıktı: Base64 URL-safe imza (padding yok)
      */
     public static String sign(String sharedSecret, String message) {
+        return sign(sharedSecret, message, StandardCharsets.UTF_8);
+    }
+
+    public static String sign(String sharedSecret, String message, Charset charset) {
         try {
             Mac mac = Mac.getInstance(ALGO);
-            SecretKeySpec keySpec = new SecretKeySpec(sharedSecret.getBytes(StandardCharsets.UTF_8), ALGO);
+            Charset effectiveCharset = charset == null ? StandardCharsets.UTF_8 : charset;
+            SecretKeySpec keySpec = new SecretKeySpec(sharedSecret.getBytes(effectiveCharset), ALGO);
             mac.init(keySpec);
 
-            byte[] raw = mac.doFinal(message.getBytes(StandardCharsets.UTF_8));
+            byte[] raw = mac.doFinal(message.getBytes(effectiveCharset));
             return Base64.getUrlEncoder().withoutPadding().encodeToString(raw);
         } catch (Exception e) {
             throw new IllegalStateException("HMAC signing failed", e);
@@ -37,7 +43,11 @@ public final class HmacUtil {
      * constant-time compare: timing attack riskini azaltır
      */
     public static boolean verify(String sharedSecret, String message, String expectedSignature) {
-        String actual = sign(sharedSecret, message);
+        return verify(sharedSecret, message, expectedSignature, StandardCharsets.UTF_8);
+    }
+
+    public static boolean verify(String sharedSecret, String message, String expectedSignature, Charset charset) {
+        String actual = sign(sharedSecret, message, charset);
         return constantTimeEquals(actual, expectedSignature);
     }
 
