@@ -1,4 +1,4 @@
-package ulug.musa.acquirer.security;
+package ulug.musa.common.security;
 
 /**
  * Bu projede kullandığımız güvenlik header isimlerini tek yerde topluyoruz.
