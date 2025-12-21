@@ -58,7 +58,7 @@ public class SecurityValidationFilter extends OncePerRequestFilter {
             filterChain.doFilter(wrapped, response);
         } catch (SecurityValidationException e) {
             // Eksik header / invalid signature vb. -> 4xx dön
-            exceptionHandler.write(response, e.status().value(), "SEC_VALIDATION_FAILED", e.getMessage());
+            exceptionHandler.write(response, e.status().value(), SecurityExceptionHandler.ERROR_CODE, e.getMessage());
         }
     }
 }
