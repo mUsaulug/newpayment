@@ -26,6 +26,36 @@ import {
 
 type RiskLevel = "MINIMAL" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 type Decision = "APPROVED" | "PENDING" | "DECLINED";
+type TxnType = "AUTH" | "CAPTURE" | "VOID" | "REVERSAL";
+
+interface PaymentResponse {
+  approved: boolean;
+  message: string;
+  responseCode: string;
+  fraudScore: number;
+  riskLevel: RiskLevel;
+  fraudReasons: string[];
+}
+
+const mapFraudDecision = (response: PaymentResponse): Decision => {
+  if (response.approved || response.responseCode === "00") {
+    return "APPROVED";
+  }
+
+  const message = response.message?.toUpperCase() ?? "";
+  if (message.includes("PENDING") || response.responseCode === "09" || response.responseCode === "68") {
+    return "PENDING";
+  }
+
+  return "DECLINED";
+};
+
+const mapFraudResult = (response: PaymentResponse) => ({
+  fraudScore: response.fraudScore,
+  riskLevel: response.riskLevel,
+  decision: mapFraudDecision(response),
+  reasons: response.fraudReasons ?? [],
+});
 
 interface Scenario {
   id: string;
@@ -33,11 +63,15 @@ interface Scenario {
   request: {
     terminalId: string;
     traceId: string;
+    txnType: TxnType;
     amount: number;
     currency: string;
     panToken: string;
     timestamp: number;
     nonce: string;
+    idempotencyKey: string;
+    keyVersion: number;
+    signature: string;
   };
   securityCheck: {
     mtls: boolean;
@@ -54,12 +88,7 @@ interface Scenario {
     cardAvgAmt: number;
     timeSinceLastTx: number;
   };
-  fraudResult: {
-    fraudScore: number;
-    riskLevel: RiskLevel;
-    decision: Decision;
-    reasons: string[];
-  };
+  response: PaymentResponse;
   persisted: boolean;
   fallbackUsed: boolean;
 }
@@ -77,96 +106,234 @@ type SimulationState =
 // --- MOCK BACKEND DATA STREAM ---
 // Burası senin backend scriptinden gelecek olan JSON listesini temsil eder.
 // Frontend bu veriyi değiştirmez, sadece sırasıyla okur ve oynatır.
+// Backend sözleşmesi: txnType ve keyVersion frontend'de sabit/konfigürasyonlu gönderilir.
+const DEFAULT_TXN_TYPE: TxnType = "AUTH";
+const DEFAULT_KEY_VERSION = 1;
+
+const NONCES = [
+  "A1b2C3d4E5f6G7h8I9j0KL",
+  "M2n3P4q5R6s7T8u9V0w1XY",
+  "Z9y8X7w6V5u4T3s2R1q0PN",
+  "a0b1c2d3e4f5g6h7i8j9kL",
+  "m1n2o3p4q5r6s7t8u9v0wx",
+  "Yx9w8v7u6t5s4r3q2p1o0n",
+  "H1G2F3E4D5C6B7A8z9y0xw",
+  "k9j8i7h6g5f4e3d2c1b0aZ",
+  "P0o1N2m3L4k5J6i7H8g9FE",
+  "r1S2t3U4v5W6x7Y8z9A0BC",
+];
+
+const DEFAULT_SIGNATURE = "U2lnbmF0dXJlX0RlbW8x";
 
 const MOCK_DATA_STREAM: Scenario[] = [
   {
     id: "tx-1",
     name: "Scenario 1: Standard Morning Coffee",
-    request: { terminalId: "TERM-001", traceId: "trc-1001", amount: 45.0, currency: "TRY", panToken: "tok_visa_4421", timestamp: 1735660200, nonce: "n7721a" },
+    request: {
+      terminalId: "TERM-001",
+      traceId: "trc-1001",
+      txnType: DEFAULT_TXN_TYPE,
+      amount: 45.0,
+      currency: "TRY",
+      panToken: "tok_visa_4421",
+      timestamp: 1735660200,
+      nonce: NONCES[0],
+      idempotencyKey: "idem-trc-1001",
+      keyVersion: DEFAULT_KEY_VERSION,
+      signature: DEFAULT_SIGNATURE,
+    },
     securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
     features: { hour: 8, isNight: 0, distanceKm: 0.5, amtZscore: -0.2, cardAvgAmt: 50, timeSinceLastTx: 3600 },
-    fraudResult: { fraudScore: 0.01, riskLevel: "MINIMAL", decision: "APPROVED", reasons: [] },
+    response: { approved: true, responseCode: "00", message: "APPROVED", fraudScore: 0.01, riskLevel: "MINIMAL", fraudReasons: [] },
     persisted: true, fallbackUsed: false,
   },
   {
     id: "tx-2",
     name: "Scenario 2: Lunch at City Center",
-    request: { terminalId: "TERM-004", traceId: "trc-1002", amount: 150.0, currency: "TRY", panToken: "tok_visa_4421", timestamp: 1735670000, nonce: "n7722b" },
+    request: {
+      terminalId: "TERM-004",
+      traceId: "trc-1002",
+      txnType: DEFAULT_TXN_TYPE,
+      amount: 150.0,
+      currency: "TRY",
+      panToken: "tok_visa_4421",
+      timestamp: 1735670000,
+      nonce: NONCES[1],
+      idempotencyKey: "idem-trc-1002",
+      keyVersion: DEFAULT_KEY_VERSION,
+      signature: DEFAULT_SIGNATURE,
+    },
     securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
     features: { hour: 13, isNight: 0, distanceKm: 2.1, amtZscore: 0.1, cardAvgAmt: 50, timeSinceLastTx: 12000 },
-    fraudResult: { fraudScore: 0.03, riskLevel: "MINIMAL", decision: "APPROVED", reasons: [] },
+    response: { approved: true, responseCode: "00", message: "APPROVED", fraudScore: 0.03, riskLevel: "MINIMAL", fraudReasons: [] },
     persisted: true, fallbackUsed: false,
   },
   {
     id: "tx-3",
     name: "Scenario 3: High Value Electronics (Risk)",
-    request: { terminalId: "TERM-099", traceId: "trc-1003", amount: 25000.0, currency: "TRY", panToken: "tok_master_8812", timestamp: 1735675000, nonce: "n9912b" },
+    request: {
+      terminalId: "TERM-099",
+      traceId: "trc-1003",
+      txnType: DEFAULT_TXN_TYPE,
+      amount: 25000.0,
+      currency: "TRY",
+      panToken: "tok_master_8812",
+      timestamp: 1735675000,
+      nonce: NONCES[2],
+      idempotencyKey: "idem-trc-1003",
+      keyVersion: DEFAULT_KEY_VERSION,
+      signature: DEFAULT_SIGNATURE,
+    },
     securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
     features: { hour: 15, isNight: 0, distanceKm: 15.0, amtZscore: 5.5, cardAvgAmt: 500, timeSinceLastTx: 120 },
-    fraudResult: { fraudScore: 0.85, riskLevel: "HIGH", decision: "PENDING", reasons: ["High Amount", "Velocity Check"] },
+    response: { approved: false, responseCode: "09", message: "PENDING", fraudScore: 0.85, riskLevel: "HIGH", fraudReasons: ["High Amount", "Velocity Check"] },
     persisted: true, fallbackUsed: false,
   },
   {
     id: "tx-4",
     name: "Scenario 4: Security Replay Attack",
-    request: { terminalId: "TERM-XXX", traceId: "trc-bad-actor", amount: 1.0, currency: "TRY", panToken: "tok_cloned_000", timestamp: 1735660999, nonce: "used_nonce_123" },
+    request: {
+      terminalId: "TERM-XXX",
+      traceId: "trc-bad-actor",
+      txnType: DEFAULT_TXN_TYPE,
+      amount: 1.0,
+      currency: "TRY",
+      panToken: "tok_cloned_000",
+      timestamp: 1735660999,
+      nonce: NONCES[0],
+      idempotencyKey: "idem-trc-bad-actor",
+      keyVersion: DEFAULT_KEY_VERSION,
+      signature: DEFAULT_SIGNATURE,
+    },
     securityCheck: { mtls: true, headerHmac: false, nonce: false, timestamp: true, bodySignature: true }, // BACKEND SAYS FAIL
     features: { hour: 3, isNight: 1, distanceKm: 999, amtZscore: 0, cardAvgAmt: 0, timeSinceLastTx: 0 },
-    fraudResult: { fraudScore: 0, riskLevel: "CRITICAL", decision: "DECLINED", reasons: ["Security Violation"] },
+    response: { approved: false, responseCode: "05", message: "DECLINED", fraudScore: 0, riskLevel: "CRITICAL", fraudReasons: ["Security Violation"] },
     persisted: false, fallbackUsed: false,
   },
   {
     id: "tx-5",
     name: "Scenario 5: Night Gas Station",
-    request: { terminalId: "TERM-055", traceId: "trc-1005", amount: 800.0, currency: "TRY", panToken: "tok_visa_4421", timestamp: 1735688000, nonce: "n7725e" },
+    request: {
+      terminalId: "TERM-055",
+      traceId: "trc-1005",
+      txnType: DEFAULT_TXN_TYPE,
+      amount: 800.0,
+      currency: "TRY",
+      panToken: "tok_visa_4421",
+      timestamp: 1735688000,
+      nonce: NONCES[3],
+      idempotencyKey: "idem-trc-1005",
+      keyVersion: DEFAULT_KEY_VERSION,
+      signature: DEFAULT_SIGNATURE,
+    },
     securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
     features: { hour: 23, isNight: 1, distanceKm: 45.0, amtZscore: 1.2, cardAvgAmt: 50, timeSinceLastTx: 300 },
-    fraudResult: { fraudScore: 0.45, riskLevel: "MEDIUM", decision: "APPROVED", reasons: ["Night Transaction"] },
+    response: { approved: true, responseCode: "00", message: "APPROVED", fraudScore: 0.45, riskLevel: "MEDIUM", fraudReasons: ["Night Transaction"] },
     persisted: true, fallbackUsed: false,
   },
   {
     id: "tx-6",
     name: "Scenario 6: Timeout Fallback",
-    request: { terminalId: "TERM-012", traceId: "trc-1006", amount: 60.0, currency: "TRY", panToken: "tok_troy_1111", timestamp: 1735690000, nonce: "n1111f" },
+    request: {
+      terminalId: "TERM-012",
+      traceId: "trc-1006",
+      txnType: DEFAULT_TXN_TYPE,
+      amount: 60.0,
+      currency: "TRY",
+      panToken: "tok_troy_1111",
+      timestamp: 1735690000,
+      nonce: NONCES[4],
+      idempotencyKey: "idem-trc-1006",
+      keyVersion: DEFAULT_KEY_VERSION,
+      signature: DEFAULT_SIGNATURE,
+    },
     securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
     features: { hour: 10, isNight: 0, distanceKm: 1.0, amtZscore: 0, cardAvgAmt: 60, timeSinceLastTx: 5000 },
-    fraudResult: { fraudScore: 0.1, riskLevel: "LOW", decision: "APPROVED", reasons: ["System Timeout", "Fallback Applied"] },
+    response: { approved: true, responseCode: "00", message: "APPROVED", fraudScore: 0.1, riskLevel: "LOW", fraudReasons: ["System Timeout", "Fallback Applied"] },
     persisted: true, fallbackUsed: true, // BACKEND SAYS FALLBACK USED
   },
   {
     id: "tx-7",
     name: "Scenario 7: E-Com Subscription",
-    request: { terminalId: "VIRT-001", traceId: "trc-1007", amount: 199.90, currency: "TRY", panToken: "tok_visa_4421", timestamp: 1735700000, nonce: "n7727g" },
+    request: {
+      terminalId: "VIRT-001",
+      traceId: "trc-1007",
+      txnType: DEFAULT_TXN_TYPE,
+      amount: 199.90,
+      currency: "TRY",
+      panToken: "tok_visa_4421",
+      timestamp: 1735700000,
+      nonce: NONCES[5],
+      idempotencyKey: "idem-trc-1007",
+      keyVersion: DEFAULT_KEY_VERSION,
+      signature: DEFAULT_SIGNATURE,
+    },
     securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
     features: { hour: 9, isNight: 0, distanceKm: 0, amtZscore: 0.5, cardAvgAmt: 50, timeSinceLastTx: 86400 },
-    fraudResult: { fraudScore: 0.05, riskLevel: "MINIMAL", decision: "APPROVED", reasons: [] },
+    response: { approved: true, responseCode: "00", message: "APPROVED", fraudScore: 0.05, riskLevel: "MINIMAL", fraudReasons: [] },
     persisted: true, fallbackUsed: false,
   },
   {
     id: "tx-8",
     name: "Scenario 8: Stolen Card Attempt",
-    request: { terminalId: "TERM-666", traceId: "trc-1008", amount: 5000.0, currency: "TRY", panToken: "tok_black_9999", timestamp: 1735705000, nonce: "n6666h" },
+    request: {
+      terminalId: "TERM-666",
+      traceId: "trc-1008",
+      txnType: DEFAULT_TXN_TYPE,
+      amount: 5000.0,
+      currency: "TRY",
+      panToken: "tok_black_9999",
+      timestamp: 1735705000,
+      nonce: NONCES[6],
+      idempotencyKey: "idem-trc-1008",
+      keyVersion: DEFAULT_KEY_VERSION,
+      signature: DEFAULT_SIGNATURE,
+    },
     securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
     features: { hour: 4, isNight: 1, distanceKm: 500.0, amtZscore: 10.0, cardAvgAmt: 100, timeSinceLastTx: 60 },
-    fraudResult: { fraudScore: 0.98, riskLevel: "CRITICAL", decision: "DECLINED", reasons: ["Impossible Travel", "Amount Spike"] },
+    response: { approved: false, responseCode: "05", message: "DECLINED", fraudScore: 0.98, riskLevel: "CRITICAL", fraudReasons: ["Impossible Travel", "Amount Spike"] },
     persisted: true, fallbackUsed: false,
   },
   {
     id: "tx-9",
     name: "Scenario 9: Grocery Shopping",
-    request: { terminalId: "TERM-002", traceId: "trc-1009", amount: 340.50, currency: "TRY", panToken: "tok_visa_4421", timestamp: 1735710000, nonce: "n7729i" },
+    request: {
+      terminalId: "TERM-002",
+      traceId: "trc-1009",
+      txnType: DEFAULT_TXN_TYPE,
+      amount: 340.50,
+      currency: "TRY",
+      panToken: "tok_visa_4421",
+      timestamp: 1735710000,
+      nonce: NONCES[7],
+      idempotencyKey: "idem-trc-1009",
+      keyVersion: DEFAULT_KEY_VERSION,
+      signature: DEFAULT_SIGNATURE,
+    },
     securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
     features: { hour: 18, isNight: 0, distanceKm: 1.0, amtZscore: 0.8, cardAvgAmt: 50, timeSinceLastTx: 10000 },
-    fraudResult: { fraudScore: 0.12, riskLevel: "LOW", decision: "APPROVED", reasons: [] },
+    response: { approved: true, responseCode: "00", message: "APPROVED", fraudScore: 0.12, riskLevel: "LOW", fraudReasons: [] },
     persisted: true, fallbackUsed: false,
   },
   {
     id: "tx-10",
     name: "Scenario 10: Late Night Taxi",
-    request: { terminalId: "POS-TAXI", traceId: "trc-1010", amount: 220.0, currency: "TRY", panToken: "tok_visa_4421", timestamp: 1735720000, nonce: "n7730j" },
+    request: {
+      terminalId: "POS-TAXI",
+      traceId: "trc-1010",
+      txnType: DEFAULT_TXN_TYPE,
+      amount: 220.0,
+      currency: "TRY",
+      panToken: "tok_visa_4421",
+      timestamp: 1735720000,
+      nonce: NONCES[9],
+      idempotencyKey: "idem-trc-1010",
+      keyVersion: DEFAULT_KEY_VERSION,
+      signature: DEFAULT_SIGNATURE,
+    },
     securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
     features: { hour: 2, isNight: 1, distanceKm: 5.0, amtZscore: 0.3, cardAvgAmt: 50, timeSinceLastTx: 500 },
-    fraudResult: { fraudScore: 0.25, riskLevel: "LOW", decision: "APPROVED", reasons: [] },
+    response: { approved: true, responseCode: "00", message: "APPROVED", fraudScore: 0.25, riskLevel: "LOW", fraudReasons: [] },
     persisted: true, fallbackUsed: false,
   },
 ];
@@ -240,6 +407,7 @@ const App = () => {
 
   // MOCK STREAM'den sıradaki veriyi okuyoruz. Frontend karar vermez, backend'in verdiğini okur.
   const scenario = MOCK_DATA_STREAM[currentScenarioIdx];
+  const fraudResult = mapFraudResult(scenario.response);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll logs
@@ -283,11 +451,11 @@ const App = () => {
         setState("SCORING");
         break;
       case "SCORING":
-        addLog(`Backend Fraud Score: ${scenario.fraudResult.fraudScore}`);
+        addLog(`Backend Fraud Score: ${fraudResult.fraudScore}`);
         setState("DECIDING");
         break;
       case "DECIDING":
-        addLog(`Final Decision: ${scenario.fraudResult.decision}`);
+        addLog(`Final Decision: ${fraudResult.decision}`);
         setState("PERSISTING");
         break;
       case "PERSISTING":
@@ -356,9 +524,9 @@ const App = () => {
       
       else if (state === "SCORING") {
         // Skoru animasyonla yükselt (Verideki fraudScore hedefine kadar)
-        if (scoreProgress < scenario.fraudResult.fraudScore * 100) {
+        if (scoreProgress < fraudResult.fraudScore * 100) {
             timer = setTimeout(() => {
-                setScoreProgress(prev => Math.min(prev + 10, scenario.fraudResult.fraudScore * 100));
+                setScoreProgress(prev => Math.min(prev + 10, fraudResult.fraudScore * 100));
             }, 50 / currentSpeed);
         } else {
             timer = setTimeout(() => {
@@ -370,7 +538,7 @@ const App = () => {
       
       else if (state === "DECIDING") {
         timer = setTimeout(() => {
-          addLog(`Result: ${scenario.fraudResult.decision}`);
+          addLog(`Result: ${fraudResult.decision}`);
           setState("PERSISTING");
         }, baseDelay);
       } 
@@ -556,8 +724,10 @@ const App = () => {
                     <div className="bg-slate-800 p-3 rounded font-mono text-xs text-slate-400 overflow-x-auto h-28">
                         <span className="text-purple-400">{"{"}</span><br/>
                         &nbsp;&nbsp;"traceId": <span className="text-yellow-300">"{scenario.request.traceId}"</span>,<br/>
+                        &nbsp;&nbsp;"txnType": <span className="text-yellow-300">"{scenario.request.txnType}"</span>,<br/>
                         &nbsp;&nbsp;"pan": <span className="text-yellow-300">"{scenario.request.panToken.substring(0,10)}..."</span>,<br/>
-                        &nbsp;&nbsp;"nonce": <span className="text-yellow-300">"{scenario.request.nonce}"</span><br/>
+                        &nbsp;&nbsp;"nonce": <span className="text-yellow-300">"{scenario.request.nonce}"</span>,<br/>
+                        &nbsp;&nbsp;"keyVersion": <span className="text-yellow-300">{scenario.request.keyVersion}</span>
                         <span className="text-purple-400">{"}"}</span>
                     </div>
                 </div>
@@ -651,7 +821,7 @@ const App = () => {
                     <span className="text-slate-400 text-xs">Risk Score</span>
                     <span className="text-4xl font-bold text-white">
                         {(state === "SCORING" || state === "DECIDING" || state === "PERSISTING" || state === "FINISHED") 
-                            ? (state === "SCORING" ? scoreProgress.toFixed(0) : (scenario.fraudResult.fraudScore * 100).toFixed(0))
+                            ? (state === "SCORING" ? scoreProgress.toFixed(0) : (fraudResult.fraudScore * 100).toFixed(0))
                             : "--"}
                         <span className="text-base font-normal text-slate-500">/100</span>
                     </span>
@@ -677,11 +847,11 @@ const App = () => {
                 {(state === "SCORING" || state === "DECIDING" || state === "PERSISTING" || state === "FINISHED") && scoreProgress > 0 && (
                     <div className="mt-4 flex justify-center">
                          <span className={`px-4 py-1 rounded-full text-xs font-bold border ${
-                            scenario.fraudResult.riskLevel === "CRITICAL" || scenario.fraudResult.riskLevel === "HIGH" ? "bg-red-900/40 text-red-400 border-red-800" :
-                            scenario.fraudResult.riskLevel === "MEDIUM" ? "bg-yellow-900/40 text-yellow-400 border-yellow-800" :
+                            fraudResult.riskLevel === "CRITICAL" || fraudResult.riskLevel === "HIGH" ? "bg-red-900/40 text-red-400 border-red-800" :
+                            fraudResult.riskLevel === "MEDIUM" ? "bg-yellow-900/40 text-yellow-400 border-yellow-800" :
                             "bg-emerald-900/40 text-emerald-400 border-emerald-800"
                          }`}>
-                            RISK LEVEL: {scenario.fraudResult.riskLevel}
+                            RISK LEVEL: {fraudResult.riskLevel}
                          </span>
                     </div>
                 )}
@@ -698,15 +868,15 @@ const App = () => {
                 
                 {(state === "DECIDING" || state === "PERSISTING" || state === "FINISHED") ? (
                     <div className={`w-32 h-32 rounded-full border-4 flex items-center justify-center animate-in zoom-in duration-300 ${
-                        scenario.fraudResult.decision === "APPROVED" ? "border-emerald-500 bg-emerald-900/20 text-emerald-500" :
-                        scenario.fraudResult.decision === "DECLINED" ? "border-red-500 bg-red-900/20 text-red-500" :
+                        fraudResult.decision === "APPROVED" ? "border-emerald-500 bg-emerald-900/20 text-emerald-500" :
+                        fraudResult.decision === "DECLINED" ? "border-red-500 bg-red-900/20 text-red-500" :
                         "border-yellow-500 bg-yellow-900/20 text-yellow-500"
                     }`}>
                         <div className="text-center transform -rotate-12">
-                            {scenario.fraudResult.decision === "APPROVED" && <CheckCircle2 size={48} className="mx-auto mb-1" />}
-                            {scenario.fraudResult.decision === "DECLINED" && <ShieldAlert size={48} className="mx-auto mb-1" />}
-                            {scenario.fraudResult.decision === "PENDING" && <Activity size={48} className="mx-auto mb-1" />}
-                            <span className="block font-bold text-sm tracking-wider">{scenario.fraudResult.decision}</span>
+                            {fraudResult.decision === "APPROVED" && <CheckCircle2 size={48} className="mx-auto mb-1" />}
+                            {fraudResult.decision === "DECLINED" && <ShieldAlert size={48} className="mx-auto mb-1" />}
+                            {fraudResult.decision === "PENDING" && <Activity size={48} className="mx-auto mb-1" />}
+                            <span className="block font-bold text-sm tracking-wider">{fraudResult.decision}</span>
                         </div>
                     </div>
                 ) : (
@@ -715,9 +885,9 @@ const App = () => {
                     </div>
                 )}
 
-                {scenario.fraudResult.reasons.length > 0 && (state === "DECIDING" || state === "PERSISTING" || state === "FINISHED") && (
+                {fraudResult.reasons.length > 0 && (state === "DECIDING" || state === "PERSISTING" || state === "FINISHED") && (
                     <div className="mt-6 flex flex-wrap gap-2 justify-center">
-                        {scenario.fraudResult.reasons.map(r => (
+                        {fraudResult.reasons.map(r => (
                             <span key={r} className="px-2 py-0.5 bg-slate-800 text-slate-400 text-[10px] rounded border border-slate-700">
                                 {r}
                             </span>
