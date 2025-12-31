@@ -129,6 +129,61 @@ Yapılan her işlemin kaydını tutar. ML modelinin "geçmiş davranışları" �
     3.  ML modeli yüksek bir risk skoru (örn: 0.95) üretir.
     4.  Sistem işlemi otomatik olarak **REDDEDER (DECLINED)**.
 
+### 6.3. Storyboard: Sahne Akışı (POS → Security → Feature → Fraud → Decision/DB)
+
+#### Akış Mantığı
+*   Bir request akışı sırayla sahnelerden geçer.
+*   Her sahne tamamlandığında bir sonraki sahne aktifleşir.
+*   Hata durumunda akış bulunduğu sahnede durur ve hata notu gösterilir.
+
+#### 1 Sayfa Storyboard (Kutular + Oklar)
+```mermaid
+flowchart LR
+    POS[POS Client] --> SEC[Security Validation]
+    SEC --> FEAT[Feature Extraction]
+    FEAT --> FRAUD[Fraud Engine]
+    FRAUD --> DEC[Decision & Persistence]
+```
+
+#### Kutular Altında Gösterilecek Minimum Metin/İkon Listesi
+
+**POS Client**
+*   terminalId
+*   traceId
+*   amount
+*   panToken
+*   timestamp
+*   nonce
+*   Aksiyon: **Generate Request** → request state: **Created**
+
+**Security Validation**
+*   mTLS ✅/❌
+*   Header HMAC ✅/❌
+*   Nonce format ✅/❌
+*   Timestamp skew ✅/❌
+*   Body signature ✅/❌
+*   Aksiyon: **Validating...** → **Passed/Failed** badge'leri
+
+**Feature Extraction**
+*   hour
+*   isNight
+*   distanceKm
+*   amtZscore
+*   cardAvgAmt
+*   timeSinceLastTx
+*   Aksiyon: **Features ready** status
+
+**Fraud Engine**
+*   probability score
+*   riskLevel
+*   model vs fallback ayrımı
+*   Aksiyon: gauge/bar animasyonu (0 → skor)
+
+**Decision & Persistence**
+*   APPROVED / PENDING / DECLINED badge
+*   "transaction_history insert" log satırı
+*   (Opsiyonel) "user_profile update" log satırı
+
 ---
 
 ## 7. Sahtecilik Tespit Sistemi (Fraud Detection)
