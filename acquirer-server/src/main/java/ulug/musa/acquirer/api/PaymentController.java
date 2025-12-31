@@ -2,10 +2,13 @@ package ulug.musa.acquirer.api;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import ulug.musa.acquirer.fraud.FraudDecision;
 import ulug.musa.acquirer.fraud.FraudDetectionService;
+import ulug.musa.acquirer.repository.TransactionHistoryRepository;
 import ulug.musa.acquirer.security.validation.RequestSecurityService;
 import ulug.musa.common.model.PaymentRequest;
 import ulug.musa.common.model.PaymentResponse;
@@ -32,11 +35,14 @@ public class PaymentController {
 
     private final RequestSecurityService requestSecurityService;
     private final FraudDetectionService fraudDetectionService;
+    private final TransactionHistoryRepository transactionHistoryRepository;
 
     public PaymentController(RequestSecurityService requestSecurityService,
-            FraudDetectionService fraudDetectionService) {
+            FraudDetectionService fraudDetectionService,
+            TransactionHistoryRepository transactionHistoryRepository) {
         this.requestSecurityService = requestSecurityService;
         this.fraudDetectionService = fraudDetectionService;
+        this.transactionHistoryRepository = transactionHistoryRepository;
     }
 
     @PostMapping
@@ -50,6 +56,12 @@ public class PaymentController {
 
         // 1. Security validation
         requestSecurityService.validateAfterHeaders(request);
+
+        // 1.1 Idempotency checks (traceId / idempotencyKey)
+        if (transactionHistoryRepository.existsByTraceId(request.getTraceId())
+                || hasDuplicateIdempotencyKey(request.getIdempotencyKey())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Duplicate request detected");
+        }
 
         // 2. Fraud detection
         FraudDecision fraudDecision = fraudDetectionService.evaluate(
@@ -96,5 +108,12 @@ public class PaymentController {
             return String.format("%06d", Math.abs(UUID.randomUUID().hashCode()) % 1_000_000);
         }
         return null;
+    }
+
+    private boolean hasDuplicateIdempotencyKey(String idempotencyKey) {
+        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+            return false;
+        }
+        return transactionHistoryRepository.existsByIdempotencyKey(idempotencyKey);
     }
 }
