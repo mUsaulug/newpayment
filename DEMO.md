@@ -160,6 +160,36 @@ merchant: shopping @ (39.9334, 32.8597)
 amount: 5000.00
 ```
 
+## Gemini Prompt (UI Demo Talimatları)
+
+**Amaç cümlesi:** POS ödeme akışını görsel simülasyonla anlatan demo UI oluştur.
+
+### UI Bölümleri
+- POS Client panel
+- Security Validation panel
+- Feature Extraction panel
+- Fraud Scoring panel
+- Decision & DB panel
+
+### UI State Machine
+- Created → Validating → FeatureExtracted → Scored → Decided → Persisted
+
+### Dataset Formatı
+- JSON array
+- Her item şu alanları içerir: `request` + `securityCheck` + `fraudScore` + `decision` + `reasons`
+
+### Görsel Öğe İstekleri
+- Badge (APPROVED/PENDING/DECLINED)
+- Gauge/progress bar
+- Timeline/log listesi
+
+### Kontroller
+- “Play / Pause / Step” kontrol butonları eklenmesini iste.
+
+### Hata Akışları (UI Görünümü)
+- “Security fail” durumunda, Security Validation paneli kırmızıya dönüp hata mesajı ve durdurulmuş akış gösterecek.
+- “Fraud API timeout (fallback)” durumunda, Fraud Scoring panelinde uyarı etiketi ve fallback skor/karar gösterilecek; timeline/log listesinde timeout kaydı yer alacak.
+
 ## Expected Response Format
 
 ```json
