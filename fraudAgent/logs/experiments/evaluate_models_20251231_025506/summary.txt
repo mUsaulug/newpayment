@@ -1,0 +1,102 @@
+2025-12-31 02:55:06 | INFO     | fraud_ml.evaluate_models | ======================================================================
+2025-12-31 02:55:06 | INFO     | fraud_ml.evaluate_models | SCRIPT: evaluate_models
+2025-12-31 02:55:06 | INFO     | fraud_ml.evaluate_models | RUN ID: 20251231_025506
+2025-12-31 02:55:06 | INFO     | fraud_ml.evaluate_models | START TIME: 2025-12-31 02:55:06
+2025-12-31 02:55:06 | INFO     | fraud_ml.evaluate_models | ======================================================================
+2025-12-31 02:55:06 | INFO     | fraud_ml.evaluate_models | ================================================================================
+2025-12-31 02:55:06 | INFO     | fraud_ml.evaluate_models | COMPREHENSIVE MODEL EVALUATION
+2025-12-31 02:55:06 | INFO     | fraud_ml.evaluate_models | ================================================================================
+2025-12-31 02:55:06 | INFO     | fraud_ml.evaluate_models | [1] Loading models...
+2025-12-31 02:55:06 | INFO     | fraud_ml.evaluate_models |   Loading XGBoost model...
+2025-12-31 02:55:08 | INFO     | fraud_ml.evaluate_models |     ✓ XGBoost loaded
+2025-12-31 02:55:08 | INFO     | fraud_ml.evaluate_models |   Loading GNN model...
+2025-12-31 02:55:09 | INFO     | fraud_ml.evaluate_models |     ✓ GNN loaded (77,569 params)
+2025-12-31 02:55:09 | INFO     | fraud_ml.evaluate_models | 
+[2] Loading test data...
+2025-12-31 02:55:10 | INFO     | fraud_ml.evaluate_models |   ✓ Tabular test set: 555,719 samples
+2025-12-31 02:55:10 | INFO     | fraud_ml.evaluate_models |   ✓ Features shape: (555719, 34)
+2025-12-31 02:55:10 | INFO     | fraud_ml.evaluate_models |   ✓ Graph test set: 555,719 nodes, 1,061,320 edges
+2025-12-31 02:55:10 | INFO     | fraud_ml.evaluate_models |   ✓ Fraud ratio: 0.0039
+2025-12-31 02:55:10 | INFO     | fraud_ml.evaluate_models | 
+[3] XGBoost predictions...
+2025-12-31 02:55:10 | INFO     | fraud_ml.evaluate_models |   ✓ Generated 555,719 predictions
+2025-12-31 02:55:10 | INFO     | fraud_ml.evaluate_models |   ✓ Threshold: 0.2716
+2025-12-31 02:55:10 | INFO     | fraud_ml.evaluate_models | 
+[4] GNN predictions...
+2025-12-31 02:55:30 | INFO     | fraud_ml.evaluate_models |   ✓ Generated 555,719 predictions
+2025-12-31 02:55:30 | INFO     | fraud_ml.evaluate_models |   ✓ Threshold: 0.4500
+2025-12-31 02:55:30 | INFO     | fraud_ml.evaluate_models | 
+[5] Calculating metrics...
+2025-12-31 02:55:31 | INFO     | fraud_ml.evaluate_models |   ✓ Metrics calculated
+2025-12-31 02:55:31 | INFO     | fraud_ml.evaluate_models | 
+[6] Performing error analysis...
+2025-12-31 02:55:31 | INFO     | fraud_ml.evaluate_models |   ✓ Error analysis complete
+2025-12-31 02:55:31 | INFO     | fraud_ml.evaluate_models | 
+[7] Creating comparison dataframe...
+2025-12-31 02:55:31 | INFO     | fraud_ml.evaluate_models |   ✓ Comparison dataframe created
+2025-12-31 02:55:31 | INFO     | fraud_ml.evaluate_models | 
+[8] Saving results...
+2025-12-31 02:55:31 | INFO     | fraud_ml.evaluate_models | 
+  ✓ Results saved: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\results\evaluation_results_20251231_025531.json
+2025-12-31 02:55:32 | INFO     | fraud_ml.evaluate_models |   ✓ Predictions saved: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\results\predictions_comparison_20251231_025531.csv
+2025-12-31 02:55:32 | INFO     | fraud_ml.evaluate_models | 
+[9] Creating visualizations...
+2025-12-31 02:55:33 | INFO     | fraud_ml.evaluate_models |   ✓ Confusion matrices: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\results\confusion_matrices_20251231_025531.png
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models |   ✓ ROC curves: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\results\roc_curves_20251231_025531.png
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models |   ✓ Precision-Recall curves: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\results\precision_recall_curves_20251231_025531.png
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | 
+================================================================================
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | COMPREHENSIVE MODEL EVALUATION RESULTS
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | ================================================================================
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | 
+📊 PERFORMANCE METRICS:
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | --------------------------------------------------------------------------------
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | Metric               XGBoost         GNN (Optimized) Winner         
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | --------------------------------------------------------------------------------
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | AUC-ROC              0.9964          0.4891          ✅ XGBoost      
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | AUC-PR               0.9208          0.0037          ✅ XGBoost      
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | Precision            0.2214          0.0020          ✅ XGBoost      
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | Recall               0.9655          0.0019          ✅ XGBoost      
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | F1-Score             0.3603          0.0019          ✅ XGBoost      
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | Specificity          0.9868          0.9964          🔥 GNN          
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | 
+📈 CONFUSION MATRIX COMPARISON:
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | --------------------------------------------------------------------------------
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | Metric               XGBoost         GNN (Optimized)
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | --------------------------------------------------------------------------------
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | True Positives       2,071           4              
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | False Negatives      74              2,141          
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | False Positives      7,281           1,983          
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | True Negatives       546,293         551,591        
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | 
+🔍 ERROR ANALYSIS:
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | --------------------------------------------------------------------------------
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | Total samples: 555,719
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | Total fraud: 2,145
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | Total legitimate: 553,574
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | 
+Both models correct: 544,343 (97.95%)
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | Both models wrong: 103 (0.02%)
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | XGBoost better: 4,021
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | GNN better: 7,252
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | 
+Disagreement: 11,273 (2.03%)
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | 
+================================================================================
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | 
+================================================================================
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | ✅ EVALUATION COMPLETE!
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | ================================================================================
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | 
+Results directory: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\results
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models |   - Metrics: evaluation_results_20251231_025531.json
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models |   - Predictions: predictions_comparison_20251231_025531.csv
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models |   - Confusion Matrices: confusion_matrices_20251231_025531.png
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models |   - ROC Curves: roc_curves_20251231_025531.png
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models |   - PR Curves: precision_recall_curves_20251231_025531.png
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | ================================================================================
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | ======================================================================
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | STATUS: SUCCESS
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | DURATION: 27.94 seconds (0.47 minutes)
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | METADATA: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\logs\experiments\evaluate_models_20251231_025506\metadata.json
+2025-12-31 02:55:34 | INFO     | fraud_ml.evaluate_models | ======================================================================

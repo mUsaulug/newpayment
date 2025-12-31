@@ -1,0 +1,62 @@
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn | ======================================================================
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn | SCRIPT: train_gnn
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn | RUN ID: 20251229_225723
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn | START TIME: 2025-12-29 22:57:23
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn | ======================================================================
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn | GNN FRAUD DETECTION TRAINING PIPELINE
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn | GraphSAGE-based fraud detection on transaction graphs
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn | Parameters: {
+  "hidden_channels": 128,
+  "num_layers": 3,
+  "dropout": 0.3,
+  "batch_size": 512,
+  "num_neighbors": [
+    15,
+    10
+  ],
+  "num_epochs": 30,
+  "patience": 7,
+  "learning_rate": 0.001,
+  "target_recall": 0.85
+}
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn | [1] Loading graph data...
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn |   ✓ Train graph: 1,296,675 nodes, 2,382,782 edges
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn |   ✓ Test graph: 555,719 nodes, 1,061,320 edges
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn |   ✓ Node features: 10 dimensions
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn |   ✓ Train fraud ratio: 0.0058
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn |   ✓ Test fraud ratio: 0.0039
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn | [2] Creating mini-batch loaders...
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn |   ✓ Train batches: 2027
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn |   ✓ Val batches: 507
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn |   ✓ Model built: 77,569 parameters
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn | [3] Training GNN model...
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn |   Device: cpu
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn |   Epochs: 30
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn |   Learning rate: 0.001
+2025-12-29 22:57:23 | INFO     | fraud_ml.train_gnn |   Early stopping patience: 7
+2025-12-29 22:58:56 | INFO     | fraud_ml.train_gnn |   Epoch 001 | Loss: 0.0009 | Val AUC: 0.9990 | Val F1: 0.8932
+2025-12-29 22:58:56 | INFO     | fraud_ml.train_gnn |     → New best model! (AUC: 0.9990)
+2025-12-29 23:00:39 | INFO     | fraud_ml.train_gnn |   Epoch 002 | Loss: 0.0004 | Val AUC: 0.9992 | Val F1: 0.9013
+2025-12-29 23:00:39 | INFO     | fraud_ml.train_gnn |     → New best model! (AUC: 0.9992)
+2025-12-29 23:02:07 | INFO     | fraud_ml.train_gnn |   Epoch 003 | Loss: 0.0003 | Val AUC: 0.9996 | Val F1: 0.9167
+2025-12-29 23:02:07 | INFO     | fraud_ml.train_gnn |     → New best model! (AUC: 0.9996)
+2025-12-29 23:03:31 | INFO     | fraud_ml.train_gnn |   Epoch 004 | Loss: 0.0003 | Val AUC: 0.9996 | Val F1: 0.9169
+2025-12-29 23:06:01 | INFO     | fraud_ml.train_gnn |   Epoch 005 | Loss: 0.0003 | Val AUC: 0.9994 | Val F1: 0.9246
+2025-12-29 23:11:28 | INFO     | fraud_ml.train_gnn |   Epoch 006 | Loss: 0.0003 | Val AUC: 0.9995 | Val F1: 0.9365
+2025-12-29 23:33:25 | INFO     | fraud_ml.train_gnn |   Epoch 007 | Loss: 0.0003 | Val AUC: 0.9997 | Val F1: 0.9392
+2025-12-29 23:33:25 | INFO     | fraud_ml.train_gnn |     → New best model! (AUC: 0.9997)
+2025-12-30 00:03:16 | INFO     | fraud_ml.train_gnn |   Epoch 008 | Loss: 0.0002 | Val AUC: 0.9998 | Val F1: 0.9492
+2025-12-30 00:03:16 | INFO     | fraud_ml.train_gnn |     → New best model! (AUC: 0.9998)
+2025-12-30 00:19:38 | INFO     | fraud_ml.train_gnn |   Epoch 009 | Loss: 0.0002 | Val AUC: 0.9998 | Val F1: 0.9436
+2025-12-30 00:34:55 | INFO     | fraud_ml.train_gnn |   Epoch 010 | Loss: 0.0002 | Val AUC: 0.9998 | Val F1: 0.9530
+2025-12-30 00:48:00 | INFO     | fraud_ml.train_gnn |   Epoch 011 | Loss: 0.0002 | Val AUC: 0.9997 | Val F1: 0.9561
+2025-12-30 01:04:28 | INFO     | fraud_ml.train_gnn |   Epoch 012 | Loss: 0.0002 | Val AUC: 0.9998 | Val F1: 0.9591
+2025-12-30 01:31:17 | INFO     | fraud_ml.train_gnn |   Epoch 013 | Loss: 0.0002 | Val AUC: 0.9998 | Val F1: 0.9587
+2025-12-30 01:50:14 | INFO     | fraud_ml.train_gnn |   Epoch 014 | Loss: 0.0002 | Val AUC: 0.9999 | Val F1: 0.9605
+2025-12-30 01:50:14 | INFO     | fraud_ml.train_gnn |     → New best model! (AUC: 0.9999)
+2025-12-30 01:55:35 | INFO     | fraud_ml.train_gnn |   Epoch 015 | Loss: 0.0002 | Val AUC: 0.9998 | Val F1: 0.9608
+2025-12-30 02:02:18 | INFO     | fraud_ml.train_gnn |   Epoch 016 | Loss: 0.0002 | Val AUC: 0.9998 | Val F1: 0.9586
+2025-12-30 02:08:15 | INFO     | fraud_ml.train_gnn |   Epoch 017 | Loss: 0.0002 | Val AUC: 0.9999 | Val F1: 0.9676
+2025-12-30 02:08:15 | INFO     | fraud_ml.train_gnn |     → New best model! (AUC: 0.9999)
+2025-12-30 02:14:20 | INFO     | fraud_ml.train_gnn |   Epoch 018 | Loss: 0.0002 | Val AUC: 0.9999 | Val F1: 0.9588
+2025-12-30 02:14:20 | INFO     | fraud_ml.train_gnn |     → New best model! (AUC: 0.9999)

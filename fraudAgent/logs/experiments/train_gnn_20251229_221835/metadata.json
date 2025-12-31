@@ -1,0 +1,24 @@
+{
+  "script_name": "train_gnn",
+  "run_id": "20251229_221835",
+  "start_time": "2025-12-29T22:18:35.099593",
+  "parameters": {
+    "hidden_channels": 128,
+    "num_layers": 3,
+    "dropout": 0.3,
+    "batch_size": 1024,
+    "num_neighbors": [
+      10,
+      5
+    ],
+    "num_epochs": 50,
+    "patience": 10,
+    "learning_rate": 0.001,
+    "target_recall": 0.85
+  },
+  "metrics": {},
+  "artifacts": [],
+  "status": "failed",
+  "end_time": "2025-12-29T22:18:40.499712",
+  "duration_seconds": 5.400119
+}

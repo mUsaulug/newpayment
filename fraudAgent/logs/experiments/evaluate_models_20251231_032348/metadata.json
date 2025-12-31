@@ -1,0 +1,11 @@
+{
+  "script_name": "evaluate_models",
+  "run_id": "20251231_032348",
+  "start_time": "2025-12-31T03:23:48.237132",
+  "parameters": {},
+  "metrics": {},
+  "artifacts": [],
+  "status": "success",
+  "end_time": "2025-12-31T03:24:13.282226",
+  "duration_seconds": 25.045094
+}

@@ -1,0 +1,30 @@
+2025-12-31 02:52:33 | INFO     | fraud_ml.evaluate_models | ======================================================================
+2025-12-31 02:52:33 | INFO     | fraud_ml.evaluate_models | SCRIPT: evaluate_models
+2025-12-31 02:52:33 | INFO     | fraud_ml.evaluate_models | RUN ID: 20251231_025233
+2025-12-31 02:52:33 | INFO     | fraud_ml.evaluate_models | START TIME: 2025-12-31 02:52:33
+2025-12-31 02:52:33 | INFO     | fraud_ml.evaluate_models | ======================================================================
+2025-12-31 02:52:33 | INFO     | fraud_ml.evaluate_models | ================================================================================
+2025-12-31 02:52:33 | INFO     | fraud_ml.evaluate_models | COMPREHENSIVE MODEL EVALUATION
+2025-12-31 02:52:33 | INFO     | fraud_ml.evaluate_models | ================================================================================
+2025-12-31 02:52:33 | INFO     | fraud_ml.evaluate_models | [1] Loading models...
+2025-12-31 02:52:33 | INFO     | fraud_ml.evaluate_models |   Loading XGBoost model...
+2025-12-31 02:52:35 | INFO     | fraud_ml.evaluate_models |     ✓ XGBoost loaded
+2025-12-31 02:52:35 | INFO     | fraud_ml.evaluate_models |   Loading GNN model...
+2025-12-31 02:52:35 | INFO     | fraud_ml.evaluate_models |     ✓ GNN loaded (77,569 params)
+2025-12-31 02:52:35 | INFO     | fraud_ml.evaluate_models | 
+[2] Loading test data...
+2025-12-31 02:52:35 | ERROR    | fraud_ml.evaluate_models | Evaluation failed: [Errno 2] No such file or directory: 'C:\\Users\\monster\\Desktop\\PyhtonLesson\\fraudAgent\\data\\processed\\X_test.pkl'
+2025-12-31 02:52:35 | ERROR    | fraud_ml.evaluate_models | Traceback (most recent call last):
+  File "C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\scripts\evaluate_models.py", line 506, in main
+    X_test, y_test, graph_test = load_test_data(logger)
+                                 ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\scripts\evaluate_models.py", line 151, in load_test_data
+    with open(TEST_FEATURES, 'rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\monster\\Desktop\\PyhtonLesson\\fraudAgent\\data\\processed\\X_test.pkl'
+
+2025-12-31 02:52:35 | INFO     | fraud_ml.evaluate_models | ======================================================================
+2025-12-31 02:52:35 | INFO     | fraud_ml.evaluate_models | STATUS: FAILED
+2025-12-31 02:52:35 | INFO     | fraud_ml.evaluate_models | DURATION: 2.33 seconds (0.04 minutes)
+2025-12-31 02:52:35 | INFO     | fraud_ml.evaluate_models | METADATA: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\logs\experiments\evaluate_models_20251231_025233\metadata.json
+2025-12-31 02:52:35 | INFO     | fraud_ml.evaluate_models | ======================================================================

@@ -1,0 +1,87 @@
+2025-12-29 22:51:54 | INFO     | fraud_ml.build_graph | ======================================================================
+2025-12-29 22:51:54 | INFO     | fraud_ml.build_graph | SCRIPT: build_graph
+2025-12-29 22:51:54 | INFO     | fraud_ml.build_graph | RUN ID: 20251229_225154
+2025-12-29 22:51:54 | INFO     | fraud_ml.build_graph | START TIME: 2025-12-29 22:51:54
+2025-12-29 22:51:54 | INFO     | fraud_ml.build_graph | ======================================================================
+2025-12-29 22:51:54 | INFO     | fraud_ml.build_graph | TRANSACTION-LEVEL GRAPH CONSTRUCTION PIPELINE
+2025-12-29 22:51:54 | INFO     | fraud_ml.build_graph | Building fraud detection graphs with temporal and merchant edges
+2025-12-29 22:51:54 | INFO     | fraud_ml.build_graph | Parameters: {
+  "temporal_window_hours": 24,
+  "merchant_window_hours": 24,
+  "max_merchant_edges": 50,
+  "node_features": 10
+}
+2025-12-29 22:51:54 | INFO     | fraud_ml.build_graph | 
+[STEP 1] Loading datasets...
+2025-12-29 22:51:54 | INFO     | fraud_ml.build_graph | Loading data from fraudTrain.csv...
+2025-12-29 22:51:59 | INFO     | fraud_ml.build_graph |   ✓ Loaded 1,296,675 transactions
+2025-12-29 22:51:59 | INFO     | fraud_ml.build_graph |   ✓ Fraud ratio: 0.0058
+2025-12-29 22:51:59 | INFO     | fraud_ml.build_graph | Loading data from fraudTest.csv...
+2025-12-29 22:52:02 | INFO     | fraud_ml.build_graph |   ✓ Loaded 555,719 transactions
+2025-12-29 22:52:02 | INFO     | fraud_ml.build_graph |   ✓ Fraud ratio: 0.0039
+2025-12-29 22:52:02 | INFO     | fraud_ml.build_graph | 
+[STEP 2] Building TRAIN graph...
+2025-12-29 22:52:02 | INFO     | fraud_ml.build_graph | 
+============================================================
+2025-12-29 22:52:02 | INFO     | fraud_ml.build_graph | Building TRAIN graph...
+2025-12-29 22:52:02 | INFO     | fraud_ml.build_graph | ============================================================
+2025-12-29 22:52:02 | INFO     | fraud_ml.build_graph | [1] Creating node features...
+2025-12-29 22:52:04 | INFO     | fraud_ml.build_graph |   ✓ Created node features: torch.Size([1296675, 10])
+2025-12-29 22:52:04 | INFO     | fraud_ml.build_graph |     Features: amount, hour, day, weekend, night, age, distance, city_pop, category, gender
+2025-12-29 22:52:04 | INFO     | fraud_ml.build_graph | [2] Creating temporal edges (same card, sequential)...
+2025-12-29 22:52:09 | INFO     | fraud_ml.build_graph |   ✓ Created 2,375,512 temporal edges
+2025-12-29 22:52:09 | INFO     | fraud_ml.build_graph | [3] Creating merchant edges (same merchant, temporal window)...
+2025-12-29 22:52:11 | INFO     | fraud_ml.build_graph |   ✓ Created 7,274 merchant edges
+2025-12-29 22:52:11 | INFO     | fraud_ml.build_graph | [4] Combining edge types...
+2025-12-29 22:52:20 | INFO     | fraud_ml.build_graph |   ✓ Total edges: 2,382,782
+2025-12-29 22:52:21 | INFO     | fraud_ml.build_graph | 
+✓ Graph created successfully!
+2025-12-29 22:52:21 | INFO     | fraud_ml.build_graph |   Nodes: 1,296,675
+2025-12-29 22:52:21 | INFO     | fraud_ml.build_graph |   Edges: 2,382,782
+2025-12-29 22:52:21 | INFO     | fraud_ml.build_graph |   Node features: 10
+2025-12-29 22:52:21 | INFO     | fraud_ml.build_graph |   Fraud ratio: 0.0058
+2025-12-29 22:52:21 | INFO     | fraud_ml.build_graph |   Avg degree: 1.84
+2025-12-29 22:52:21 | INFO     | fraud_ml.build_graph | 
+[STEP 3] Building TEST graph...
+2025-12-29 22:52:21 | INFO     | fraud_ml.build_graph | 
+============================================================
+2025-12-29 22:52:21 | INFO     | fraud_ml.build_graph | Building TEST graph...
+2025-12-29 22:52:21 | INFO     | fraud_ml.build_graph | ============================================================
+2025-12-29 22:52:21 | INFO     | fraud_ml.build_graph | [1] Creating node features...
+2025-12-29 22:52:21 | INFO     | fraud_ml.build_graph |   ✓ Created node features: torch.Size([555719, 10])
+2025-12-29 22:52:21 | INFO     | fraud_ml.build_graph |     Features: amount, hour, day, weekend, night, age, distance, city_pop, category, gender
+2025-12-29 22:52:21 | INFO     | fraud_ml.build_graph | [2] Creating temporal edges (same card, sequential)...
+2025-12-29 22:52:27 | INFO     | fraud_ml.build_graph |   ✓ Created 1,041,534 temporal edges
+2025-12-29 22:52:27 | INFO     | fraud_ml.build_graph | [3] Creating merchant edges (same merchant, temporal window)...
+2025-12-29 22:52:32 | INFO     | fraud_ml.build_graph |   ✓ Created 19,796 merchant edges
+2025-12-29 22:52:32 | INFO     | fraud_ml.build_graph | [4] Combining edge types...
+2025-12-29 22:52:42 | INFO     | fraud_ml.build_graph |   ✓ Total edges: 1,061,320
+2025-12-29 22:52:42 | INFO     | fraud_ml.build_graph | 
+✓ Graph created successfully!
+2025-12-29 22:52:42 | INFO     | fraud_ml.build_graph |   Nodes: 555,719
+2025-12-29 22:52:42 | INFO     | fraud_ml.build_graph |   Edges: 1,061,320
+2025-12-29 22:52:42 | INFO     | fraud_ml.build_graph |   Node features: 10
+2025-12-29 22:52:42 | INFO     | fraud_ml.build_graph |   Fraud ratio: 0.0039
+2025-12-29 22:52:42 | INFO     | fraud_ml.build_graph |   Avg degree: 1.91
+2025-12-29 22:52:42 | INFO     | fraud_ml.build_graph | 
+[STEP 4] Saving graphs...
+2025-12-29 22:52:42 | INFO     | fraud_ml.build_graph | Artifact saved: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\data\processed\graph_train.pt (Training transaction graph)
+2025-12-29 22:52:42 | INFO     | fraud_ml.build_graph |   ✓ Saved to C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\data\processed\graph_train.pt
+2025-12-29 22:52:42 | INFO     | fraud_ml.build_graph | Artifact saved: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\data\processed\graph_test.pt (Test transaction graph)
+2025-12-29 22:52:42 | INFO     | fraud_ml.build_graph |   ✓ Saved to C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\data\processed\graph_test.pt
+2025-12-29 22:52:42 | INFO     | fraud_ml.build_graph | Metrics: {
+  "train_nodes": 1296675,
+  "train_edges": 2382782,
+  "train_avg_degree": 1.8376092698633042,
+  "test_nodes": 555719,
+  "test_edges": 1061320,
+  "test_avg_degree": 1.909814132682165,
+  "node_features": 10
+}
+2025-12-29 22:52:42 | INFO     | fraud_ml.build_graph | 
+GRAPH CONSTRUCTION COMPLETE!
+2025-12-29 22:52:42 | INFO     | fraud_ml.build_graph | ======================================================================
+2025-12-29 22:52:42 | INFO     | fraud_ml.build_graph | STATUS: SUCCESS
+2025-12-29 22:52:42 | INFO     | fraud_ml.build_graph | DURATION: 48.13 seconds (0.80 minutes)
+2025-12-29 22:52:42 | INFO     | fraud_ml.build_graph | METADATA: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\logs\experiments\build_graph_20251229_225154\metadata.json
+2025-12-29 22:52:42 | INFO     | fraud_ml.build_graph | ======================================================================

@@ -1,0 +1,52 @@
+{
+  "timestamp": "20251231_025531",
+  "xgboost": {
+    "model": "XGBoost",
+    "auc_roc": 0.9964477628876608,
+    "auc_pr": 0.9207680733858812,
+    "precision": 0.22144995722840033,
+    "recall": 0.9655011655011655,
+    "f1": 0.36026789597286246,
+    "tn": 546293,
+    "fp": 7281,
+    "fn": 74,
+    "tp": 2071,
+    "specificity": 0.9868472869029253,
+    "false_positive_rate": 0.013152713097074645
+  },
+  "gnn": {
+    "model": "GNN",
+    "auc_roc": 0.4891291426090748,
+    "auc_pr": 0.0036940389223236833,
+    "precision": 0.0020130850528434826,
+    "recall": 0.0018648018648018648,
+    "f1": 0.001936108422071636,
+    "tn": 551591,
+    "fp": 1983,
+    "fn": 2141,
+    "tp": 4,
+    "specificity": 0.9964178230914024,
+    "false_positive_rate": 0.003582176908597586
+  },
+  "error_analysis": {
+    "total_samples": 555719,
+    "total_fraud": 2145,
+    "total_legit": 553574,
+    "xgboost_false_negatives": 74,
+    "xgboost_false_positives": 7281,
+    "gnn_false_negatives": 2141,
+    "gnn_false_positives": 1983,
+    "disagreement_count": 11273,
+    "disagreement_rate": 0.02028543202589798,
+    "both_wrong": 103,
+    "xgb_better": 4021,
+    "gnn_better": 7252,
+    "both_right": 544343
+  },
+  "summary": {
+    "winner_auc": "XGBoost",
+    "winner_f1": "XGBoost",
+    "winner_recall": "XGBoost",
+    "winner_precision": "XGBoost"
+  }
+}

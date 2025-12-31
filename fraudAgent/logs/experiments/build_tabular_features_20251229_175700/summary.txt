@@ -1,0 +1,28 @@
+2025-12-29 17:57:00 | INFO     | fraud_ml.build_tabular_features | ======================================================================
+2025-12-29 17:57:00 | INFO     | fraud_ml.build_tabular_features | SCRIPT: build_tabular_features
+2025-12-29 17:57:00 | INFO     | fraud_ml.build_tabular_features | RUN ID: 20251229_175700
+2025-12-29 17:57:00 | INFO     | fraud_ml.build_tabular_features | START TIME: 2025-12-29 17:57:00
+2025-12-29 17:57:00 | INFO     | fraud_ml.build_tabular_features | ======================================================================
+2025-12-29 17:57:00 | INFO     | fraud_ml.build_tabular_features | TABULAR FEATURE ENGINEERING PIPELINE
+2025-12-29 17:57:00 | INFO     | fraud_ml.build_tabular_features | Parameters: {
+  "train_file": "C:\\Users\\monster\\Desktop\\PyhtonLesson\\fraudAgent\\data\\raw\\fraudTrain.csv",
+  "test_file": "C:\\Users\\monster\\Desktop\\PyhtonLesson\\fraudAgent\\data\\raw\\fraudTest.csv",
+  "output_dir": "C:\\Users\\monster\\Desktop\\PyhtonLesson\\fraudAgent\\data\\processed"
+}
+2025-12-29 17:57:00 | INFO     | fraud_ml.build_tabular_features | 
+[STEP 1] Loading datasets...
+2025-12-29 17:57:06 | INFO     | fraud_ml.build_tabular_features | ✓ Train: 1,296,675 rows
+2025-12-29 17:57:06 | INFO     | fraud_ml.build_tabular_features | ✓ Test: 555,719 rows
+2025-12-29 17:57:06 | INFO     | fraud_ml.build_tabular_features | 
+[STEP 2] Building TRAIN features...
+2025-12-29 17:57:06 | INFO     | fraud_ml.build_tabular_features | 
+============================================================
+2025-12-29 17:57:06 | INFO     | fraud_ml.build_tabular_features | Building TRAIN features...
+2025-12-29 17:57:06 | INFO     | fraud_ml.build_tabular_features | ============================================================
+2025-12-29 17:57:06 | INFO     | fraud_ml.build_tabular_features | [1] Creating time features...
+2025-12-29 17:57:07 | INFO     | fraud_ml.build_tabular_features |   ✓ Created 8 time features
+2025-12-29 17:57:07 | INFO     | fraud_ml.build_tabular_features | [2] Creating amount features...
+2025-12-29 17:57:07 | INFO     | fraud_ml.build_tabular_features |   ✓ Created 3 amount features
+2025-12-29 17:57:07 | INFO     | fraud_ml.build_tabular_features | [3] Creating geo features...
+2025-12-29 17:57:07 | INFO     | fraud_ml.build_tabular_features |   ✓ Created 4 geo features
+2025-12-29 17:57:07 | INFO     | fraud_ml.build_tabular_features | [4] Creating behavioral/velocity features...

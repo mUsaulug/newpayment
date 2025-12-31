@@ -1,0 +1,68 @@
+======================================================================
+FRAUD DATASET INSPECTION REPORT
+======================================================================
+
+1. DATASET SIZE
+----------------------------------------------------------------------
+Train: 1,296,675 rows, 24 columns
+Test:  555,719 rows, 24 columns
+
+2. FRAUD DISTRIBUTION
+----------------------------------------------------------------------
+Train:
+  Not fraud: 99.42% (1,289,169 samples)
+  Fraud:     0.58% (7,506 samples)
+
+Test:
+  Not fraud: 99.61% (553,574 samples)
+  Fraud:     0.39% (2,145 samples)
+
+3. GRAPH STRUCTURE INFO
+----------------------------------------------------------------------
+Train:
+  Card nodes (cc_num):   983
+  Merchant nodes:        693
+  Transaction edges:     1,296,675
+
+Test:
+  Card nodes (cc_num):   924
+  Merchant nodes:        693
+  Transaction edges:     555,719
+
+4. COLUMN CLASSIFICATION
+----------------------------------------------------------------------
+DROP (will not use):
+  - Unnamed: 0 (index)
+  - trans_num (unique ID, no pattern)
+  - first, last, street (PII)
+
+TIME (feature engineering needed):
+  - trans_date_trans_time → hour, day, weekend
+  - dob → age
+  - unix_time (redundant with trans_date_trans_time)
+
+CATEGORICAL (encoding needed):
+  - merchant (693 unique)
+  - category (14 unique)
+  - gender (2 unique)
+  - job (494 unique)
+  - city, state, zip
+
+NUMERIC (direct or transform):
+  - amt (log-transform)
+  - lat, long (customer location)
+  - merch_lat, merch_long (merchant location)
+  - city_pop (log-transform)
+
+LABEL:
+  - is_fraud (target variable)
+
+5. NEXT STEPS
+----------------------------------------------------------------------
+1. Build graph structure (PyTorch Geometric)
+2. Engineer tabular features (time, geo, behavioral)
+3. Train GNN model on graph
+4. Train XGBoost on tabular features
+5. Train meta-model (Logistic Regression) for ensemble
+
+======================================================================

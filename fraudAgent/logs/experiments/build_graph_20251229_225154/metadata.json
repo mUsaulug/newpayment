@@ -1,0 +1,35 @@
+{
+  "script_name": "build_graph",
+  "run_id": "20251229_225154",
+  "start_time": "2025-12-29T22:51:54.592700",
+  "parameters": {
+    "temporal_window_hours": 24,
+    "merchant_window_hours": 24,
+    "max_merchant_edges": 50,
+    "node_features": 10
+  },
+  "metrics": {
+    "train_nodes": 1296675,
+    "train_edges": 2382782,
+    "train_avg_degree": 1.8376092698633042,
+    "test_nodes": 555719,
+    "test_edges": 1061320,
+    "test_avg_degree": 1.909814132682165,
+    "node_features": 10
+  },
+  "artifacts": [
+    {
+      "path": "C:\\Users\\monster\\Desktop\\PyhtonLesson\\fraudAgent\\data\\processed\\graph_train.pt",
+      "description": "Training transaction graph",
+      "timestamp": "2025-12-29T22:52:42.652770"
+    },
+    {
+      "path": "C:\\Users\\monster\\Desktop\\PyhtonLesson\\fraudAgent\\data\\processed\\graph_test.pt",
+      "description": "Test transaction graph",
+      "timestamp": "2025-12-29T22:52:42.723413"
+    }
+  ],
+  "status": "success",
+  "end_time": "2025-12-29T22:52:42.723732",
+  "duration_seconds": 48.131032
+}

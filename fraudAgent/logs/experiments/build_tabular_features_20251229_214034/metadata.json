@@ -1,0 +1,15 @@
+{
+  "script_name": "build_tabular_features",
+  "run_id": "20251229_214034",
+  "start_time": "2025-12-29T21:40:34.623645",
+  "parameters": {
+    "train_file": "C:\\Users\\monster\\Desktop\\PyhtonLesson\\fraudAgent\\data\\raw\\fraudTrain.csv",
+    "test_file": "C:\\Users\\monster\\Desktop\\PyhtonLesson\\fraudAgent\\data\\raw\\fraudTest.csv",
+    "output_dir": "C:\\Users\\monster\\Desktop\\PyhtonLesson\\fraudAgent\\data\\processed"
+  },
+  "metrics": {},
+  "artifacts": [],
+  "status": "failed",
+  "end_time": "2025-12-29T21:43:35.516911",
+  "duration_seconds": 180.893266
+}

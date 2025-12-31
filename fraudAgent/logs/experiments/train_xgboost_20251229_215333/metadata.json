@@ -1,0 +1,25 @@
+{
+  "script_name": "train_xgboost",
+  "run_id": "20251229_215333",
+  "start_time": "2025-12-29T21:53:33.533389",
+  "parameters": {
+    "val_size": 0.2,
+    "target_recall": 0.85,
+    "default_threshold": 0.5,
+    "smote_sampling_strategy": 0.3,
+    "xgb_max_depth": 6,
+    "xgb_n_estimators": 200,
+    "xgb_scale_pos_weight": 10
+  },
+  "metrics": {},
+  "artifacts": [
+    {
+      "path": "C:\\Users\\monster\\Desktop\\PyhtonLesson\\fraudAgent\\models\\xgboost_fraud_model_20251229_215358.pkl",
+      "description": "XGBoost fraud detection model (with SMOTE pipeline)",
+      "timestamp": "2025-12-29T21:53:58.215757"
+    }
+  ],
+  "status": "failed",
+  "end_time": "2025-12-29T21:53:58.216757",
+  "duration_seconds": 24.683368
+}

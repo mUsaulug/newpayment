@@ -1,0 +1,116 @@
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn | ======================================================================
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn | SCRIPT: train_gnn
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn | RUN ID: 20251229_221835
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn | START TIME: 2025-12-29 22:18:35
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn | ======================================================================
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn | GNN FRAUD DETECTION TRAINING PIPELINE
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn | GraphSAGE-based fraud detection on transaction graphs
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn | Parameters: {
+  "hidden_channels": 128,
+  "num_layers": 3,
+  "dropout": 0.3,
+  "batch_size": 1024,
+  "num_neighbors": [
+    10,
+    5
+  ],
+  "num_epochs": 50,
+  "patience": 10,
+  "learning_rate": 0.001,
+  "target_recall": 0.85
+}
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn | [1] Loading graph data...
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn |   ✓ Train graph: 1,676 nodes, 1,296,675 edges
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn |   ✓ Test graph: 1,676 nodes, 555,556 edges
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn |   ✓ Node features: 3 dimensions
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn |   ✓ Train fraud ratio: 0.0058
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn |   ✓ Test fraud ratio: 0.0036
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn | [2] Creating mini-batch loaders...
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn |   ✓ Train batches: 2
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn |   ✓ Val batches: 1
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn |   ✓ Model built: 75,777 parameters
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn | [3] Training GNN model...
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn |   Device: cpu
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn |   Epochs: 50
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn |   Learning rate: 0.001
+2025-12-29 22:18:35 | INFO     | fraud_ml.train_gnn |   Early stopping patience: 10
+2025-12-29 22:18:36 | INFO     | fraud_ml.train_gnn |   Epoch 001 | Loss: 0.0564 | Val AUC: 0.5571 | Val F1: 0.0319
+2025-12-29 22:18:36 | INFO     | fraud_ml.train_gnn |     → New best model! (AUC: 0.5571)
+2025-12-29 22:18:36 | INFO     | fraud_ml.train_gnn |   Epoch 002 | Loss: 0.0355 | Val AUC: 0.6589 | Val F1: 0.0000
+2025-12-29 22:18:36 | INFO     | fraud_ml.train_gnn |     → New best model! (AUC: 0.6589)
+2025-12-29 22:18:36 | INFO     | fraud_ml.train_gnn |   Epoch 003 | Loss: 0.0253 | Val AUC: 0.0806 | Val F1: 0.0000
+2025-12-29 22:18:36 | INFO     | fraud_ml.train_gnn |   Epoch 004 | Loss: 0.0192 | Val AUC: 0.1168 | Val F1: 0.0000
+2025-12-29 22:18:36 | INFO     | fraud_ml.train_gnn |   Epoch 005 | Loss: 0.0139 | Val AUC: 0.2740 | Val F1: 0.0000
+2025-12-29 22:18:36 | INFO     | fraud_ml.train_gnn |   Epoch 006 | Loss: 0.0096 | Val AUC: 0.3253 | Val F1: 0.0000
+2025-12-29 22:18:36 | INFO     | fraud_ml.train_gnn |   Epoch 007 | Loss: 0.0081 | Val AUC: 0.5837 | Val F1: 0.0000
+2025-12-29 22:18:37 | INFO     | fraud_ml.train_gnn |   Epoch 008 | Loss: 0.0057 | Val AUC: 0.7313 | Val F1: 0.0000
+2025-12-29 22:18:37 | INFO     | fraud_ml.train_gnn |     → New best model! (AUC: 0.7313)
+2025-12-29 22:18:37 | INFO     | fraud_ml.train_gnn |   Epoch 009 | Loss: 0.0043 | Val AUC: 0.4087 | Val F1: 0.0000
+2025-12-29 22:18:37 | INFO     | fraud_ml.train_gnn |   Epoch 010 | Loss: 0.0032 | Val AUC: 0.3474 | Val F1: 0.0000
+2025-12-29 22:18:37 | INFO     | fraud_ml.train_gnn |   Epoch 011 | Loss: 0.0037 | Val AUC: 0.5115 | Val F1: 0.0000
+2025-12-29 22:18:37 | INFO     | fraud_ml.train_gnn |   Epoch 012 | Loss: 0.0032 | Val AUC: 0.0913 | Val F1: 0.0000
+2025-12-29 22:18:37 | INFO     | fraud_ml.train_gnn |   Epoch 013 | Loss: 0.0051 | Val AUC: 0.6108 | Val F1: 0.0000
+2025-12-29 22:18:38 | INFO     | fraud_ml.train_gnn |   Epoch 014 | Loss: 0.0030 | Val AUC: nan | Val F1: 0.0000
+2025-12-29 22:18:38 | INFO     | fraud_ml.train_gnn |   Epoch 015 | Loss: 0.0032 | Val AUC: 0.5821 | Val F1: 0.0000
+2025-12-29 22:18:38 | INFO     | fraud_ml.train_gnn |   Epoch 016 | Loss: 0.0018 | Val AUC: 0.2500 | Val F1: 0.0000
+2025-12-29 22:18:38 | INFO     | fraud_ml.train_gnn |   Epoch 017 | Loss: 0.0034 | Val AUC: 0.8716 | Val F1: 0.0000
+2025-12-29 22:18:38 | INFO     | fraud_ml.train_gnn |     → New best model! (AUC: 0.8716)
+2025-12-29 22:18:38 | INFO     | fraud_ml.train_gnn |   Epoch 018 | Loss: 0.0025 | Val AUC: 0.5335 | Val F1: 0.0000
+2025-12-29 22:18:38 | INFO     | fraud_ml.train_gnn |   Epoch 019 | Loss: 0.0025 | Val AUC: 0.5973 | Val F1: 0.0000
+2025-12-29 22:18:39 | INFO     | fraud_ml.train_gnn |   Epoch 020 | Loss: 0.0056 | Val AUC: 0.1791 | Val F1: 0.0000
+2025-12-29 22:18:39 | INFO     | fraud_ml.train_gnn |   Epoch 021 | Loss: 0.0049 | Val AUC: 0.4567 | Val F1: 0.0000
+2025-12-29 22:18:39 | INFO     | fraud_ml.train_gnn |   Epoch 022 | Loss: 0.0064 | Val AUC: 0.0090 | Val F1: 0.0000
+2025-12-29 22:18:39 | INFO     | fraud_ml.train_gnn |   Epoch 023 | Loss: 0.0028 | Val AUC: 0.4647 | Val F1: 0.0000
+2025-12-29 22:18:39 | INFO     | fraud_ml.train_gnn |   Epoch 024 | Loss: 0.0046 | Val AUC: nan | Val F1: 0.0000
+2025-12-29 22:18:39 | INFO     | fraud_ml.train_gnn |   Epoch 025 | Loss: 0.0030 | Val AUC: 0.7791 | Val F1: 0.0000
+2025-12-29 22:18:40 | INFO     | fraud_ml.train_gnn |   Epoch 026 | Loss: 0.0038 | Val AUC: 0.4945 | Val F1: 0.0000
+2025-12-29 22:18:40 | INFO     | fraud_ml.train_gnn |   Epoch 027 | Loss: 0.0044 | Val AUC: 0.4775 | Val F1: 0.0000
+2025-12-29 22:18:40 | INFO     | fraud_ml.train_gnn |   Early stopping triggered at epoch 27
+2025-12-29 22:18:40 | INFO     | fraud_ml.train_gnn |   ✓ Training complete! Best val AUC: 0.8716
+2025-12-29 22:18:40 | INFO     | fraud_ml.train_gnn | [4] Final model evaluation...
+2025-12-29 22:18:40 | ERROR    | fraud_ml.train_gnn | Training failed: Found input variables with inconsistent numbers of samples: [1062, 1676]
+2025-12-29 22:18:40 | ERROR    | fraud_ml.train_gnn | Traceback (most recent call last):
+  File "C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\scripts\train_gnn.py", line 595, in main
+    val_metrics, test_metrics, optimal_threshold = evaluate_final_model(
+                                                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\scripts\train_gnn.py", line 414, in evaluate_final_model
+    test_metrics, test_probs, test_labels = evaluate(model, test_loader, device, logger, "Test")
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\.venv\Lib\site-packages\torch\utils\_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\scripts\train_gnn.py", line 270, in evaluate
+    metrics['auc'] = float(roc_auc_score(all_labels, all_probs))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\.venv\Lib\site-packages\sklearn\utils\_param_validation.py", line 218, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\.venv\Lib\site-packages\sklearn\metrics\_ranking.py", line 704, in roc_auc_score
+    return _average_binary_score(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\.venv\Lib\site-packages\sklearn\metrics\_base.py", line 69, in _average_binary_score
+    return binary_metric(y_true, y_score, sample_weight=sample_weight)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\.venv\Lib\site-packages\sklearn\metrics\_ranking.py", line 451, in _binary_roc_auc_score
+    fpr, tpr, _ = roc_curve(y_true, y_score, sample_weight=sample_weight)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\.venv\Lib\site-packages\sklearn\utils\_param_validation.py", line 191, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\.venv\Lib\site-packages\sklearn\metrics\_ranking.py", line 1258, in roc_curve
+    _, fps, _, tps, thresholds = confusion_matrix_at_thresholds(
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\.venv\Lib\site-packages\sklearn\utils\_param_validation.py", line 191, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\.venv\Lib\site-packages\sklearn\metrics\_ranking.py", line 930, in confusion_matrix_at_thresholds
+    check_consistent_length(y_true, y_score, sample_weight)
+  File "C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\.venv\Lib\site-packages\sklearn\utils\validation.py", line 464, in check_consistent_length
+    raise ValueError(
+ValueError: Found input variables with inconsistent numbers of samples: [1062, 1676]
+
+2025-12-29 22:18:40 | INFO     | fraud_ml.train_gnn | ======================================================================
+2025-12-29 22:18:40 | INFO     | fraud_ml.train_gnn | STATUS: FAILED
+2025-12-29 22:18:40 | INFO     | fraud_ml.train_gnn | DURATION: 5.40 seconds (0.09 minutes)
+2025-12-29 22:18:40 | INFO     | fraud_ml.train_gnn | METADATA: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\logs\experiments\train_gnn_20251229_221835\metadata.json
+2025-12-29 22:18:40 | INFO     | fraud_ml.train_gnn | ======================================================================

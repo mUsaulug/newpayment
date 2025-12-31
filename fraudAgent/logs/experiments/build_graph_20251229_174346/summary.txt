@@ -1,0 +1,36 @@
+2025-12-29 17:43:46 | INFO     | fraud_ml.build_graph | ======================================================================
+2025-12-29 17:43:46 | INFO     | fraud_ml.build_graph | SCRIPT: build_graph
+2025-12-29 17:43:46 | INFO     | fraud_ml.build_graph | RUN ID: 20251229_174346
+2025-12-29 17:43:46 | INFO     | fraud_ml.build_graph | START TIME: 2025-12-29 17:43:46
+2025-12-29 17:43:46 | INFO     | fraud_ml.build_graph | ======================================================================
+2025-12-29 17:43:46 | INFO     | fraud_ml.build_graph | GRAPH CONSTRUCTION PIPELINE
+2025-12-29 17:43:46 | INFO     | fraud_ml.build_graph | Parameters: {
+  "train_file": "C:\\Users\\monster\\Desktop\\PyhtonLesson\\fraudAgent\\data\\raw\\fraudTrain.csv",
+  "test_file": "C:\\Users\\monster\\Desktop\\PyhtonLesson\\fraudAgent\\data\\raw\\fraudTest.csv",
+  "output_dir": "C:\\Users\\monster\\Desktop\\PyhtonLesson\\fraudAgent\\data\\processed"
+}
+2025-12-29 17:43:46 | INFO     | fraud_ml.build_graph | [STEP 1] Loading datasets...
+2025-12-29 17:43:52 | INFO     | fraud_ml.build_graph | ✓ Train: 1,296,675 rows
+2025-12-29 17:43:52 | INFO     | fraud_ml.build_graph | ✓ Test: 555,719 rows
+2025-12-29 17:43:52 | INFO     | fraud_ml.build_graph | [STEP 2] Building TRAIN graph...
+2025-12-29 17:44:24 | INFO     | fraud_ml.build_graph | [STEP 3] Building TEST graph...
+2025-12-29 17:44:38 | INFO     | fraud_ml.build_graph | [STEP 4] Saving graphs...
+2025-12-29 17:44:38 | INFO     | fraud_ml.build_graph | Artifact saved: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\data\processed\graph_train.pt (Training graph (PyTorch Geometric))
+2025-12-29 17:44:38 | INFO     | fraud_ml.build_graph | Artifact saved: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\data\processed\graph_test.pt (Test graph (PyTorch Geometric))
+2025-12-29 17:44:38 | INFO     | fraud_ml.build_graph | Artifact saved: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\data\processed\node_mappings.pkl (Node ID mappings (card/merchant))
+2025-12-29 17:44:38 | INFO     | fraud_ml.build_graph | Metrics: {
+  "train_nodes": 1676,
+  "train_edges": 1296675,
+  "train_fraud_ratio": 0.0057886517606675625,
+  "test_nodes": 1676,
+  "test_edges": 555556,
+  "test_fraud_ratio": 0.0035675971303135157,
+  "num_cards": 983,
+  "num_merchants": 693
+}
+2025-12-29 17:44:38 | INFO     | fraud_ml.build_graph | GRAPH CONSTRUCTION COMPLETE!
+2025-12-29 17:44:38 | INFO     | fraud_ml.build_graph | ======================================================================
+2025-12-29 17:44:38 | INFO     | fraud_ml.build_graph | STATUS: SUCCESS
+2025-12-29 17:44:38 | INFO     | fraud_ml.build_graph | DURATION: 52.84 seconds (0.88 minutes)
+2025-12-29 17:44:38 | INFO     | fraud_ml.build_graph | METADATA: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\logs\experiments\build_graph_20251229_174346\metadata.json
+2025-12-29 17:44:38 | INFO     | fraud_ml.build_graph | ======================================================================

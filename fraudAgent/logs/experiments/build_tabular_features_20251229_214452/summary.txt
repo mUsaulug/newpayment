@@ -1,0 +1,85 @@
+2025-12-29 21:44:52 | INFO     | fraud_ml.build_tabular_features | ======================================================================
+2025-12-29 21:44:52 | INFO     | fraud_ml.build_tabular_features | SCRIPT: build_tabular_features
+2025-12-29 21:44:52 | INFO     | fraud_ml.build_tabular_features | RUN ID: 20251229_214452
+2025-12-29 21:44:52 | INFO     | fraud_ml.build_tabular_features | START TIME: 2025-12-29 21:44:52
+2025-12-29 21:44:52 | INFO     | fraud_ml.build_tabular_features | ======================================================================
+2025-12-29 21:44:52 | INFO     | fraud_ml.build_tabular_features | TABULAR FEATURE ENGINEERING PIPELINE
+2025-12-29 21:44:52 | INFO     | fraud_ml.build_tabular_features | Parameters: {
+  "train_file": "C:\\Users\\monster\\Desktop\\PyhtonLesson\\fraudAgent\\data\\raw\\fraudTrain.csv",
+  "test_file": "C:\\Users\\monster\\Desktop\\PyhtonLesson\\fraudAgent\\data\\raw\\fraudTest.csv",
+  "output_dir": "C:\\Users\\monster\\Desktop\\PyhtonLesson\\fraudAgent\\data\\processed"
+}
+2025-12-29 21:44:52 | INFO     | fraud_ml.build_tabular_features | 
+[STEP 1] Loading datasets...
+2025-12-29 21:44:59 | INFO     | fraud_ml.build_tabular_features | ✓ Train: 1,296,675 rows
+2025-12-29 21:44:59 | INFO     | fraud_ml.build_tabular_features | ✓ Test: 555,719 rows
+2025-12-29 21:44:59 | INFO     | fraud_ml.build_tabular_features | 
+[STEP 2] Building TRAIN features...
+2025-12-29 21:44:59 | INFO     | fraud_ml.build_tabular_features | 
+============================================================
+2025-12-29 21:44:59 | INFO     | fraud_ml.build_tabular_features | Building TRAIN features...
+2025-12-29 21:44:59 | INFO     | fraud_ml.build_tabular_features | ============================================================
+2025-12-29 21:44:59 | INFO     | fraud_ml.build_tabular_features | [1] Creating time features...
+2025-12-29 21:45:00 | INFO     | fraud_ml.build_tabular_features |   ✓ Created 8 time features
+2025-12-29 21:45:00 | INFO     | fraud_ml.build_tabular_features | [2] Creating amount features...
+2025-12-29 21:45:00 | INFO     | fraud_ml.build_tabular_features |   ✓ Created 3 amount features
+2025-12-29 21:45:00 | INFO     | fraud_ml.build_tabular_features | [3] Creating geo features...
+2025-12-29 21:45:00 | INFO     | fraud_ml.build_tabular_features |   ✓ Created 4 geo features
+2025-12-29 21:45:00 | INFO     | fraud_ml.build_tabular_features | [4] Creating behavioral/velocity features...
+2025-12-29 21:45:02 | INFO     | fraud_ml.build_tabular_features |   ✓ Created 9 behavioral features (optimized, vectorized)
+2025-12-29 21:45:02 | INFO     | fraud_ml.build_tabular_features | [5] Encoding categorical features...
+2025-12-29 21:45:03 | INFO     | fraud_ml.build_tabular_features |   ✓ Encoded 5 categorical columns (TRAIN)
+2025-12-29 21:45:03 | INFO     | fraud_ml.build_tabular_features |   ✓ Added merchant frequency encoding
+2025-12-29 21:45:03 | INFO     | fraud_ml.build_tabular_features | [6] Selecting final feature set...
+2025-12-29 21:45:03 | INFO     | fraud_ml.build_tabular_features |   ✓ Final feature count: 34
+2025-12-29 21:45:03 | INFO     | fraud_ml.build_tabular_features |   ✓ Feature list: ['amt', 'lat', 'long', 'city_pop', 'merch_lat', 'merch_long', 'hour', 'dayofweek', 'day', 'month', 'year', 'is_weekend', 'is_night', 'age', 'amt_log', 'amt_zscore', 'distance_km', 'distance_log', 'city_pop_log', 'card_tx_count', 'time_since_last_tx', 'card_avg_amt', 'amt_deviation_from_card_avg', 'time_since_last_tx_log', 'card_tx_sequence', 'is_recent_active', 'amt_rolling_mean_3', 'amt_rolling_std_3', 'category_encoded', 'gender_encoded', 'state_encoded', 'amt_bucket_encoded', 'distance_bucket_encoded', 'merchant_freq']
+2025-12-29 21:45:03 | INFO     | fraud_ml.build_tabular_features | 
+✓ Feature engineering complete!
+2025-12-29 21:45:03 | INFO     | fraud_ml.build_tabular_features |   Shape: (1296675, 34)
+2025-12-29 21:45:03 | INFO     | fraud_ml.build_tabular_features |   Fraud ratio: 0.0058
+2025-12-29 21:45:03 | INFO     | fraud_ml.build_tabular_features | 
+[STEP 3] Building TEST features...
+2025-12-29 21:45:03 | INFO     | fraud_ml.build_tabular_features | 
+============================================================
+2025-12-29 21:45:03 | INFO     | fraud_ml.build_tabular_features | Building TEST features...
+2025-12-29 21:45:03 | INFO     | fraud_ml.build_tabular_features | ============================================================
+2025-12-29 21:45:03 | INFO     | fraud_ml.build_tabular_features | [1] Creating time features...
+2025-12-29 21:45:04 | INFO     | fraud_ml.build_tabular_features |   ✓ Created 8 time features
+2025-12-29 21:45:04 | INFO     | fraud_ml.build_tabular_features | [2] Creating amount features...
+2025-12-29 21:45:04 | INFO     | fraud_ml.build_tabular_features |   ✓ Created 3 amount features
+2025-12-29 21:45:04 | INFO     | fraud_ml.build_tabular_features | [3] Creating geo features...
+2025-12-29 21:45:04 | INFO     | fraud_ml.build_tabular_features |   ✓ Created 4 geo features
+2025-12-29 21:45:04 | INFO     | fraud_ml.build_tabular_features | [4] Creating behavioral/velocity features...
+2025-12-29 21:45:05 | INFO     | fraud_ml.build_tabular_features |   ✓ Created 9 behavioral features (optimized, vectorized)
+2025-12-29 21:45:05 | INFO     | fraud_ml.build_tabular_features | [5] Encoding categorical features...
+2025-12-29 21:47:56 | INFO     | fraud_ml.build_tabular_features |   ✓ Encoded 5 categorical columns (TEST)
+2025-12-29 21:47:56 | INFO     | fraud_ml.build_tabular_features |   ✓ Added merchant frequency encoding
+2025-12-29 21:47:56 | INFO     | fraud_ml.build_tabular_features | [6] Selecting final feature set...
+2025-12-29 21:47:56 | INFO     | fraud_ml.build_tabular_features |   ✓ Final feature count: 34
+2025-12-29 21:47:56 | INFO     | fraud_ml.build_tabular_features |   ✓ Feature list: ['amt', 'lat', 'long', 'city_pop', 'merch_lat', 'merch_long', 'hour', 'dayofweek', 'day', 'month', 'year', 'is_weekend', 'is_night', 'age', 'amt_log', 'amt_zscore', 'distance_km', 'distance_log', 'city_pop_log', 'card_tx_count', 'time_since_last_tx', 'card_avg_amt', 'amt_deviation_from_card_avg', 'time_since_last_tx_log', 'card_tx_sequence', 'is_recent_active', 'amt_rolling_mean_3', 'amt_rolling_std_3', 'category_encoded', 'gender_encoded', 'state_encoded', 'amt_bucket_encoded', 'distance_bucket_encoded', 'merchant_freq']
+2025-12-29 21:47:56 | INFO     | fraud_ml.build_tabular_features | 
+✓ Feature engineering complete!
+2025-12-29 21:47:56 | INFO     | fraud_ml.build_tabular_features |   Shape: (555719, 34)
+2025-12-29 21:47:56 | INFO     | fraud_ml.build_tabular_features |   Fraud ratio: 0.0039
+2025-12-29 21:47:56 | INFO     | fraud_ml.build_tabular_features | 
+[STEP 4] Saving features...
+2025-12-29 21:47:59 | INFO     | fraud_ml.build_tabular_features | Artifact saved: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\data\processed\train_features_tabular.parquet (Training tabular features)
+2025-12-29 21:47:59 | INFO     | fraud_ml.build_tabular_features | Artifact saved: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\data\processed\train_labels.parquet (Training labels)
+2025-12-29 21:47:59 | INFO     | fraud_ml.build_tabular_features | Artifact saved: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\data\processed\test_features_tabular.parquet (Test tabular features)
+2025-12-29 21:47:59 | INFO     | fraud_ml.build_tabular_features | Artifact saved: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\data\processed\test_labels.parquet (Test labels)
+2025-12-29 21:47:59 | INFO     | fraud_ml.build_tabular_features | Artifact saved: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\data\processed\feature_columns.txt (Feature column names)
+2025-12-29 21:47:59 | INFO     | fraud_ml.build_tabular_features | Metrics: {
+  "train_samples": 1296675,
+  "train_features": 34,
+  "train_fraud_ratio": 0.005788651743883394,
+  "test_samples": 555719,
+  "test_features": 34,
+  "test_fraud_ratio": 0.0038598644278853163,
+  "feature_count": 34
+}
+2025-12-29 21:47:59 | INFO     | fraud_ml.build_tabular_features | TABULAR FEATURE ENGINEERING COMPLETE!
+2025-12-29 21:47:59 | INFO     | fraud_ml.build_tabular_features | ======================================================================
+2025-12-29 21:47:59 | INFO     | fraud_ml.build_tabular_features | STATUS: SUCCESS
+2025-12-29 21:47:59 | INFO     | fraud_ml.build_tabular_features | DURATION: 187.06 seconds (3.12 minutes)
+2025-12-29 21:47:59 | INFO     | fraud_ml.build_tabular_features | METADATA: C:\Users\monster\Desktop\PyhtonLesson\fraudAgent\logs\experiments\build_tabular_features_20251229_214452\metadata.json
+2025-12-29 21:47:59 | INFO     | fraud_ml.build_tabular_features | ======================================================================
