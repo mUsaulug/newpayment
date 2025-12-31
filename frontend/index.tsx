@@ -43,7 +43,7 @@ const mapFraudDecision = (response: PaymentResponse): Decision => {
   }
 
   const message = response.message?.toUpperCase() ?? "";
-  if (message.includes("PENDING") || response.responseCode === "09" || response.responseCode === "68") {
+  if (message.includes("PENDING") || response.responseCode === "01") {
     return "PENDING";
   }
 
