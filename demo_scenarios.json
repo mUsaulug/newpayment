@@ -1,0 +1,490 @@
+{
+  "classes": [
+    {
+      "name": "NORMAL",
+      "decision": "APPROVED"
+    },
+    {
+      "name": "FRAUD",
+      "decision": "DECLINED"
+    },
+    {
+      "name": "EDGE",
+      "decision": "PENDING"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "normal-001",
+      "class": "NORMAL",
+      "request": {
+        "traceId": "ui-normal-001",
+        "panToken": "tok_ahmet_001",
+        "amount": 145.75,
+        "merchantLat": 40.9912,
+        "merchantLong": 29.0228,
+        "category": "grocery",
+        "timestamp": 1735939200
+      },
+      "expected": {
+        "decision": "APPROVED",
+        "shortReason": "Yakın lokasyon + düşük tutar + gündüz işlem",
+        "output": {
+          "securityCheck": {
+            "mtls": "PASS",
+            "signature": "PASS",
+            "timestampSkew": "PASS",
+            "idempotency": "PASS"
+          },
+          "fraudScore": 0.08,
+          "riskLevel": "MINIMAL",
+          "decision": "APPROVED",
+          "reasons": []
+        }
+      }
+    },
+    {
+      "id": "normal-002",
+      "class": "NORMAL",
+      "request": {
+        "traceId": "ui-normal-002",
+        "panToken": "tok_ahmet_001",
+        "amount": 320.4,
+        "merchantLat": 40.9915,
+        "merchantLong": 29.0219,
+        "category": "fuel",
+        "timestamp": 1735942800
+      },
+      "expected": {
+        "decision": "APPROVED",
+        "shortReason": "Alışılmış kategori + düşük risk profili",
+        "output": {
+          "securityCheck": {
+            "mtls": "PASS",
+            "signature": "PASS",
+            "timestampSkew": "PASS",
+            "idempotency": "PASS"
+          },
+          "fraudScore": 0.15,
+          "riskLevel": "LOW",
+          "decision": "APPROVED",
+          "reasons": [
+            "Düşük riskli müşteri profili"
+          ]
+        }
+      }
+    },
+    {
+      "id": "normal-003",
+      "class": "NORMAL",
+      "request": {
+        "traceId": "ui-normal-003",
+        "panToken": "tok_elin_004",
+        "amount": 980.0,
+        "merchantLat": 41.0082,
+        "merchantLong": 28.9784,
+        "category": "restaurant",
+        "timestamp": 1735946400
+      },
+      "expected": {
+        "decision": "APPROVED",
+        "shortReason": "Hafta içi akşam + makul tutar",
+        "output": {
+          "securityCheck": {
+            "mtls": "PASS",
+            "signature": "PASS",
+            "timestampSkew": "PASS",
+            "idempotency": "PASS"
+          },
+          "fraudScore": 0.22,
+          "riskLevel": "LOW",
+          "decision": "APPROVED",
+          "reasons": [
+            "Makul tutar ve normal saat"
+          ]
+        }
+      }
+    },
+    {
+      "id": "normal-004",
+      "class": "NORMAL",
+      "request": {
+        "traceId": "ui-normal-004",
+        "panToken": "tok_elif_006",
+        "amount": 56.3,
+        "merchantLat": 39.9334,
+        "merchantLong": 32.8597,
+        "category": "coffee",
+        "timestamp": 1735950000
+      },
+      "expected": {
+        "decision": "APPROVED",
+        "shortReason": "Düşük tutar + sık kullanılan kategori",
+        "output": {
+          "securityCheck": {
+            "mtls": "PASS",
+            "signature": "PASS",
+            "timestampSkew": "PASS",
+            "idempotency": "PASS"
+          },
+          "fraudScore": 0.04,
+          "riskLevel": "MINIMAL",
+          "decision": "APPROVED",
+          "reasons": []
+        }
+      }
+    },
+    {
+      "id": "normal-005",
+      "class": "NORMAL",
+      "request": {
+        "traceId": "ui-normal-005",
+        "panToken": "tok_mert_007",
+        "amount": 1240.0,
+        "merchantLat": 38.4237,
+        "merchantLong": 27.1428,
+        "category": "electronics",
+        "timestamp": 1735953600
+      },
+      "expected": {
+        "decision": "APPROVED",
+        "shortReason": "Orta tutar + şehir içi alışveriş",
+        "output": {
+          "securityCheck": {
+            "mtls": "PASS",
+            "signature": "PASS",
+            "timestampSkew": "PASS",
+            "idempotency": "PASS"
+          },
+          "fraudScore": 0.29,
+          "riskLevel": "MEDIUM",
+          "decision": "APPROVED",
+          "reasons": [
+            "Elektronik harcama ama lokasyon tutarlı"
+          ]
+        }
+      }
+    },
+    {
+      "id": "normal-006",
+      "class": "NORMAL",
+      "request": {
+        "traceId": "ui-normal-006",
+        "panToken": "tok_ayse_002",
+        "amount": 210.0,
+        "merchantLat": 40.1906,
+        "merchantLong": 29.0601,
+        "category": "grocery",
+        "timestamp": 1735957200
+      },
+      "expected": {
+        "decision": "APPROVED",
+        "shortReason": "Gün içi düşük tutar + yakın lokasyon",
+        "output": {
+          "securityCheck": {
+            "mtls": "PASS",
+            "signature": "PASS",
+            "timestampSkew": "PASS",
+            "idempotency": "PASS"
+          },
+          "fraudScore": 0.12,
+          "riskLevel": "LOW",
+          "decision": "APPROVED",
+          "reasons": [
+            "Gün içi, düşük riskli işlem"
+          ]
+        }
+      }
+    },
+    {
+      "id": "fraud-001",
+      "class": "FRAUD",
+      "request": {
+        "traceId": "ui-fraud-001",
+        "panToken": "tok_ayse_002",
+        "amount": 52000.0,
+        "merchantLat": 51.5074,
+        "merchantLong": -0.1278,
+        "category": "electronics",
+        "timestamp": 1735960800
+      },
+      "expected": {
+        "decision": "DECLINED",
+        "shortReason": "Uzak lokasyon + gece + yüksek tutar",
+        "output": {
+          "securityCheck": {
+            "mtls": "PASS",
+            "signature": "PASS",
+            "timestampSkew": "PASS",
+            "idempotency": "PASS"
+          },
+          "fraudScore": 0.93,
+          "riskLevel": "CRITICAL",
+          "decision": "DECLINED",
+          "reasons": [
+            "Uzak lokasyon",
+            "Gece işlem",
+            "Aşırı yüksek tutar"
+          ]
+        }
+      }
+    },
+    {
+      "id": "fraud-002",
+      "class": "FRAUD",
+      "request": {
+        "traceId": "ui-fraud-002",
+        "panToken": "tok_mehmet_003",
+        "amount": 18500.0,
+        "merchantLat": 52.5200,
+        "merchantLong": 13.4050,
+        "category": "luxury",
+        "timestamp": 1735964400
+      },
+      "expected": {
+        "decision": "DECLINED",
+        "shortReason": "Yurtdışı + lüks kategori + sıra dışı tutar",
+        "output": {
+          "securityCheck": {
+            "mtls": "PASS",
+            "signature": "PASS",
+            "timestampSkew": "PASS",
+            "idempotency": "PASS"
+          },
+          "fraudScore": 0.88,
+          "riskLevel": "HIGH",
+          "decision": "DECLINED",
+          "reasons": [
+            "Yurtdışı lokasyon",
+            "Lüks kategori",
+            "Sıra dışı tutar"
+          ]
+        }
+      }
+    },
+    {
+      "id": "fraud-003",
+      "class": "FRAUD",
+      "request": {
+        "traceId": "ui-fraud-003",
+        "panToken": "tok_elin_004",
+        "amount": 7600.0,
+        "merchantLat": 34.0522,
+        "merchantLong": -118.2437,
+        "category": "gaming",
+        "timestamp": 1735968000
+      },
+      "expected": {
+        "decision": "DECLINED",
+        "shortReason": "Uzak kıta + gece + alışılmadık kategori",
+        "output": {
+          "securityCheck": {
+            "mtls": "PASS",
+            "signature": "PASS",
+            "timestampSkew": "PASS",
+            "idempotency": "PASS"
+          },
+          "fraudScore": 0.9,
+          "riskLevel": "CRITICAL",
+          "decision": "DECLINED",
+          "reasons": [
+            "Uzak kıta",
+            "Gece işlem",
+            "Alışılmadık kategori"
+          ]
+        }
+      }
+    },
+    {
+      "id": "fraud-004",
+      "class": "FRAUD",
+      "request": {
+        "traceId": "ui-fraud-004",
+        "panToken": "tok_mert_007",
+        "amount": 24999.0,
+        "merchantLat": 55.7558,
+        "merchantLong": 37.6173,
+        "category": "jewelry",
+        "timestamp": 1735971600
+      },
+      "expected": {
+        "decision": "DECLINED",
+        "shortReason": "Yurtdışı + çok yüksek tutar + riskli kategori",
+        "output": {
+          "securityCheck": {
+            "mtls": "PASS",
+            "signature": "PASS",
+            "timestampSkew": "PASS",
+            "idempotency": "PASS"
+          },
+          "fraudScore": 0.91,
+          "riskLevel": "CRITICAL",
+          "decision": "DECLINED",
+          "reasons": [
+            "Riskli kategori",
+            "Yüksek tutar",
+            "Yurtdışı lokasyon"
+          ]
+        }
+      }
+    },
+    {
+      "id": "fraud-005",
+      "class": "FRAUD",
+      "request": {
+        "traceId": "ui-fraud-005",
+        "panToken": "tok_ayse_002",
+        "amount": 9800.0,
+        "merchantLat": 35.6895,
+        "merchantLong": 139.6917,
+        "category": "travel",
+        "timestamp": 1735975200
+      },
+      "expected": {
+        "decision": "DECLINED",
+        "shortReason": "Uzak lokasyon + ani seyahat harcaması",
+        "output": {
+          "securityCheck": {
+            "mtls": "PASS",
+            "signature": "PASS",
+            "timestampSkew": "PASS",
+            "idempotency": "PASS"
+          },
+          "fraudScore": 0.86,
+          "riskLevel": "HIGH",
+          "decision": "DECLINED",
+          "reasons": [
+            "Ani seyahat harcaması",
+            "Uzak lokasyon"
+          ]
+        }
+      }
+    },
+    {
+      "id": "edge-001",
+      "class": "EDGE",
+      "request": {
+        "traceId": "ui-edge-001",
+        "panToken": "tok_mehmet_003",
+        "amount": 5200.0,
+        "merchantLat": 39.9334,
+        "merchantLong": 32.8597,
+        "category": "shopping",
+        "timestamp": 1735978800
+      },
+      "expected": {
+        "decision": "PENDING",
+        "shortReason": "Yeni şehir + orta-yüksek tutar",
+        "output": {
+          "securityCheck": {
+            "mtls": "PASS",
+            "signature": "PASS",
+            "timestampSkew": "PASS",
+            "idempotency": "PASS"
+          },
+          "fraudScore": 0.63,
+          "riskLevel": "MEDIUM",
+          "decision": "PENDING",
+          "reasons": [
+            "Profilde lokasyon değişimi"
+          ]
+        }
+      }
+    },
+    {
+      "id": "edge-002",
+      "class": "EDGE",
+      "request": {
+        "traceId": "ui-edge-002",
+        "panToken": "tok_elif_006",
+        "amount": 3100.0,
+        "merchantLat": 40.7128,
+        "merchantLong": -74.0060,
+        "category": "fashion",
+        "timestamp": 1735982400
+      },
+      "expected": {
+        "decision": "PENDING",
+        "shortReason": "Yurtdışı + orta tutar + ilk işlem",
+        "output": {
+          "securityCheck": {
+            "mtls": "PASS",
+            "signature": "PASS",
+            "timestampSkew": "PASS",
+            "idempotency": "PASS"
+          },
+          "fraudScore": 0.58,
+          "riskLevel": "MEDIUM",
+          "decision": "PENDING",
+          "reasons": [
+            "Yurtdışı ama orta tutar"
+          ]
+        }
+      }
+    },
+    {
+      "id": "edge-003",
+      "class": "EDGE",
+      "request": {
+        "traceId": "ui-edge-003",
+        "panToken": "tok_ahmet_001",
+        "amount": 4200.0,
+        "merchantLat": 40.9692,
+        "merchantLong": 29.1477,
+        "category": "home",
+        "timestamp": 1735986000
+      },
+      "expected": {
+        "decision": "PENDING",
+        "shortReason": "Yüksek sepet + alışılmadık kategori",
+        "output": {
+          "securityCheck": {
+            "mtls": "PASS",
+            "signature": "PASS",
+            "timestampSkew": "PASS",
+            "idempotency": "PASS"
+          },
+          "fraudScore": 0.66,
+          "riskLevel": "MEDIUM",
+          "decision": "PENDING",
+          "reasons": [
+            "Alışılmadık kategori",
+            "Yüksek sepet tutarı"
+          ]
+        }
+      }
+    },
+    {
+      "id": "edge-004",
+      "class": "EDGE",
+      "request": {
+        "traceId": "ui-edge-004",
+        "panToken": "tok_elin_004",
+        "amount": 6800.0,
+        "merchantLat": 41.0151,
+        "merchantLong": 28.9795,
+        "category": "health",
+        "timestamp": 1735989600
+      },
+      "expected": {
+        "decision": "PENDING",
+        "shortReason": "Normal lokasyon + yüksek tutar + gece",
+        "output": {
+          "securityCheck": {
+            "mtls": "PASS",
+            "signature": "PASS",
+            "timestampSkew": "PASS",
+            "idempotency": "PASS"
+          },
+          "fraudScore": 0.61,
+          "riskLevel": "MEDIUM",
+          "decision": "PENDING",
+          "reasons": [
+            "Gece işlemi",
+            "Yüksek tutar"
+          ]
+        }
+      }
+    }
+  ]
+}
