@@ -13,6 +13,67 @@
       "decision": "PENDING"
     }
   ],
+  "requestStateMachine": {
+    "states": [
+      "Created",
+      "Validating",
+      "FeatureExtracted",
+      "Scored",
+      "Decided",
+      "Persisted"
+    ],
+    "uiActions": {
+      "Created": "request card görünür",
+      "Validating": "security checklist animasyonu",
+      "FeatureExtracted": "feature listesi görünür",
+      "Scored": "fraud gauge dolmaya başlar",
+      "Decided": "renkli badge + reason listesi",
+      "Persisted": "DB insert log satırı"
+    },
+    "eventTriggers": [
+      {
+        "event": "request_submitted",
+        "from": "Created",
+        "to": "Validating",
+        "description": "Request gönderildiğinde"
+      },
+      {
+        "event": "security_pass",
+        "from": "Validating",
+        "to": "FeatureExtracted",
+        "description": "Security pass"
+      },
+      {
+        "event": "fraud_score_returned",
+        "from": "FeatureExtracted",
+        "to": [
+          "Scored",
+          "Decided"
+        ],
+        "description": "Fraud score döndü"
+      },
+      {
+        "event": "decision_complete",
+        "from": "Decided",
+        "to": "Persisted",
+        "description": "Decision sonrası"
+      }
+    ],
+    "errorFlows": [
+      {
+        "event": "security_fail",
+        "from": "Validating",
+        "behavior": "halt",
+        "ui": "kırmızı hata paneli"
+      },
+      {
+        "event": "fraud_api_timeout",
+        "from": "FeatureExtracted",
+        "behavior": "fallback",
+        "ui": "fallback path gösterilir"
+      }
+    ]
+  },
   "scenarios": [
     {
       "id": "normal-001",
