@@ -138,7 +138,8 @@ public class FraudDetectionService {
                 decision.riskLevel(),
                 decision.decision().name(),
                 String.join("; ", decision.reasons()),
-                txnTime);
+                txnTime,
+                request.getIdempotencyKey());
         history.setMerchantLat(merchantLat);
         history.setMerchantLong(merchantLong);
         history.setMerchantCategory(merchantCategory);

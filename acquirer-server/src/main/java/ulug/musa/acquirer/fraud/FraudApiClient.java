@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -29,9 +30,13 @@ public class FraudApiClient {
             @Value("${fraud.service.timeout-ms:100}") int timeoutMs) {
 
         this.enabled = enabled;
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(timeoutMs);
+        requestFactory.setReadTimeout(timeoutMs);
         this.restClient = RestClient.builder()
                 .baseUrl(fraudServiceUrl)
                 .defaultHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                .requestFactory(requestFactory)
                 .build();
 
         log.info("FraudApiClient initialized: url={}, enabled={}, timeout={}ms",

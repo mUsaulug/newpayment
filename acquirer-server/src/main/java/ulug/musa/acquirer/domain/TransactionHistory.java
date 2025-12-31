@@ -22,6 +22,9 @@ public class TransactionHistory {
     @Column(name = "trace_id", nullable = false, length = 64)
     private String traceId;
 
+    @Column(name = "idempotency_key", length = 64)
+    private String idempotencyKey;
+
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
@@ -67,10 +70,11 @@ public class TransactionHistory {
     public static TransactionHistory from(String panToken, String traceId, BigDecimal amount,
             String terminalId, BigDecimal fraudScore,
             String riskLevel, String decision, String reasons,
-            LocalDateTime transactionTime) {
+            LocalDateTime transactionTime, String idempotencyKey) {
         TransactionHistory history = new TransactionHistory();
         history.panToken = panToken;
         history.traceId = traceId;
+        history.idempotencyKey = idempotencyKey;
         history.amount = amount;
         history.terminalId = terminalId;
         history.fraudScore = fraudScore;
@@ -104,6 +108,14 @@ public class TransactionHistory {
 
     public void setTraceId(String traceId) {
         this.traceId = traceId;
+    }
+
+    public String getIdempotencyKey() {
+        return idempotencyKey;
+    }
+
+    public void setIdempotencyKey(String idempotencyKey) {
+        this.idempotencyKey = idempotencyKey;
     }
 
     public BigDecimal getAmount() {
