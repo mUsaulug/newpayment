@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: pos-client
+
+pos-client:
+  acquirer:
+    base-url: https://localhost:8443
+  key-version: 1
+
+security:
+  hmac:
+    secret: "CHANGE_ME_DEV_SECRET_32+CHARS"
+    charset: "UTF-8"

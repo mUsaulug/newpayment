@@ -67,17 +67,11 @@ interface Scenario {
     amount: number;
     currency: string;
     panToken: string;
-    timestamp: number;
-    nonce: string;
     idempotencyKey: string;
-    keyVersion: number;
-    signature: string;
   };
   securityCheck: {
     mtls: boolean;
     headerHmac: boolean;
-    nonce: boolean;
-    timestamp: boolean;
     bodySignature: boolean;
   };
   features: {
@@ -106,24 +100,8 @@ type SimulationState =
 // --- MOCK BACKEND DATA STREAM ---
 // Burası senin backend scriptinden gelecek olan JSON listesini temsil eder.
 // Frontend bu veriyi değiştirmez, sadece sırasıyla okur ve oynatır.
-// Backend sözleşmesi: txnType ve keyVersion frontend'de sabit/konfigürasyonlu gönderilir.
+// Backend sözleşmesi: txnType frontend'de sabit/konfigürasyonlu gönderilir.
 const DEFAULT_TXN_TYPE: TxnType = "AUTH";
-const DEFAULT_KEY_VERSION = 1;
-
-const NONCES = [
-  "A1b2C3d4E5f6G7h8I9j0KL",
-  "M2n3P4q5R6s7T8u9V0w1XY",
-  "Z9y8X7w6V5u4T3s2R1q0PN",
-  "a0b1c2d3e4f5g6h7i8j9kL",
-  "m1n2o3p4q5r6s7t8u9v0wx",
-  "Yx9w8v7u6t5s4r3q2p1o0n",
-  "H1G2F3E4D5C6B7A8z9y0xw",
-  "k9j8i7h6g5f4e3d2c1b0aZ",
-  "P0o1N2m3L4k5J6i7H8g9FE",
-  "r1S2t3U4v5W6x7Y8z9A0BC",
-];
-
-const DEFAULT_SIGNATURE = "U2lnbmF0dXJlX0RlbW8x";
 
 const MOCK_DATA_STREAM: Scenario[] = [
   {
@@ -136,11 +114,7 @@ const MOCK_DATA_STREAM: Scenario[] = [
       amount: 45.0,
       currency: "TRY",
       panToken: "tok_visa_4421",
-      timestamp: 1735660200,
-      nonce: NONCES[0],
       idempotencyKey: "idem-trc-1001",
-      keyVersion: DEFAULT_KEY_VERSION,
-      signature: DEFAULT_SIGNATURE,
     },
     securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
     features: { hour: 8, isNight: 0, distanceKm: 0.5, amtZscore: -0.2, cardAvgAmt: 50, timeSinceLastTx: 3600 },
@@ -157,11 +131,7 @@ const MOCK_DATA_STREAM: Scenario[] = [
       amount: 150.0,
       currency: "TRY",
       panToken: "tok_visa_4421",
-      timestamp: 1735670000,
-      nonce: NONCES[1],
       idempotencyKey: "idem-trc-1002",
-      keyVersion: DEFAULT_KEY_VERSION,
-      signature: DEFAULT_SIGNATURE,
     },
     securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
     features: { hour: 13, isNight: 0, distanceKm: 2.1, amtZscore: 0.1, cardAvgAmt: 50, timeSinceLastTx: 12000 },
@@ -178,11 +148,7 @@ const MOCK_DATA_STREAM: Scenario[] = [
       amount: 25000.0,
       currency: "TRY",
       panToken: "tok_master_8812",
-      timestamp: 1735675000,
-      nonce: NONCES[2],
       idempotencyKey: "idem-trc-1003",
-      keyVersion: DEFAULT_KEY_VERSION,
-      signature: DEFAULT_SIGNATURE,
     },
     securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
     features: { hour: 15, isNight: 0, distanceKm: 15.0, amtZscore: 5.5, cardAvgAmt: 500, timeSinceLastTx: 120 },
@@ -199,11 +165,7 @@ const MOCK_DATA_STREAM: Scenario[] = [
       amount: 1.0,
       currency: "TRY",
       panToken: "tok_cloned_000",
-      timestamp: 1735660999,
-      nonce: NONCES[0],
       idempotencyKey: "idem-trc-bad-actor",
-      keyVersion: DEFAULT_KEY_VERSION,
-      signature: DEFAULT_SIGNATURE,
     },
     securityCheck: { mtls: true, headerHmac: false, nonce: false, timestamp: true, bodySignature: true }, // BACKEND SAYS FAIL
     features: { hour: 3, isNight: 1, distanceKm: 999, amtZscore: 0, cardAvgAmt: 0, timeSinceLastTx: 0 },
@@ -220,11 +182,7 @@ const MOCK_DATA_STREAM: Scenario[] = [
       amount: 800.0,
       currency: "TRY",
       panToken: "tok_visa_4421",
-      timestamp: 1735688000,
-      nonce: NONCES[3],
       idempotencyKey: "idem-trc-1005",
-      keyVersion: DEFAULT_KEY_VERSION,
-      signature: DEFAULT_SIGNATURE,
     },
     securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
     features: { hour: 23, isNight: 1, distanceKm: 45.0, amtZscore: 1.2, cardAvgAmt: 50, timeSinceLastTx: 300 },
@@ -241,11 +199,7 @@ const MOCK_DATA_STREAM: Scenario[] = [
       amount: 60.0,
       currency: "TRY",
       panToken: "tok_troy_1111",
-      timestamp: 1735690000,
-      nonce: NONCES[4],
       idempotencyKey: "idem-trc-1006",
-      keyVersion: DEFAULT_KEY_VERSION,
-      signature: DEFAULT_SIGNATURE,
     },
     securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
     features: { hour: 10, isNight: 0, distanceKm: 1.0, amtZscore: 0, cardAvgAmt: 60, timeSinceLastTx: 5000 },
@@ -262,11 +216,7 @@ const MOCK_DATA_STREAM: Scenario[] = [
       amount: 199.90,
       currency: "TRY",
       panToken: "tok_visa_4421",
-      timestamp: 1735700000,
-      nonce: NONCES[5],
       idempotencyKey: "idem-trc-1007",
-      keyVersion: DEFAULT_KEY_VERSION,
-      signature: DEFAULT_SIGNATURE,
     },
     securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
     features: { hour: 9, isNight: 0, distanceKm: 0, amtZscore: 0.5, cardAvgAmt: 50, timeSinceLastTx: 86400 },
@@ -283,11 +233,7 @@ const MOCK_DATA_STREAM: Scenario[] = [
       amount: 5000.0,
       currency: "TRY",
       panToken: "tok_black_9999",
-      timestamp: 1735705000,
-      nonce: NONCES[6],
       idempotencyKey: "idem-trc-1008",
-      keyVersion: DEFAULT_KEY_VERSION,
-      signature: DEFAULT_SIGNATURE,
     },
     securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
     features: { hour: 4, isNight: 1, distanceKm: 500.0, amtZscore: 10.0, cardAvgAmt: 100, timeSinceLastTx: 60 },
@@ -304,11 +250,7 @@ const MOCK_DATA_STREAM: Scenario[] = [
       amount: 340.50,
       currency: "TRY",
       panToken: "tok_visa_4421",
-      timestamp: 1735710000,
-      nonce: NONCES[7],
       idempotencyKey: "idem-trc-1009",
-      keyVersion: DEFAULT_KEY_VERSION,
-      signature: DEFAULT_SIGNATURE,
     },
     securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
     features: { hour: 18, isNight: 0, distanceKm: 1.0, amtZscore: 0.8, cardAvgAmt: 50, timeSinceLastTx: 10000 },
@@ -325,11 +267,7 @@ const MOCK_DATA_STREAM: Scenario[] = [
       amount: 220.0,
       currency: "TRY",
       panToken: "tok_visa_4421",
-      timestamp: 1735720000,
-      nonce: NONCES[9],
       idempotencyKey: "idem-trc-1010",
-      keyVersion: DEFAULT_KEY_VERSION,
-      signature: DEFAULT_SIGNATURE,
     },
     securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
     features: { hour: 2, isNight: 1, distanceKm: 5.0, amtZscore: 0.3, cardAvgAmt: 50, timeSinceLastTx: 500 },
@@ -726,8 +664,7 @@ const App = () => {
                         &nbsp;&nbsp;"traceId": <span className="text-yellow-300">"{scenario.request.traceId}"</span>,<br/>
                         &nbsp;&nbsp;"txnType": <span className="text-yellow-300">"{scenario.request.txnType}"</span>,<br/>
                         &nbsp;&nbsp;"pan": <span className="text-yellow-300">"{scenario.request.panToken.substring(0,10)}..."</span>,<br/>
-                        &nbsp;&nbsp;"nonce": <span className="text-yellow-300">"{scenario.request.nonce}"</span>,<br/>
-                        &nbsp;&nbsp;"keyVersion": <span className="text-yellow-300">{scenario.request.keyVersion}</span>
+                        &nbsp;&nbsp;"idempotencyKey": <span className="text-yellow-300">"{scenario.request.idempotencyKey}"</span>
                         <span className="text-purple-400">{"}"}</span>
                     </div>
                 </div>
