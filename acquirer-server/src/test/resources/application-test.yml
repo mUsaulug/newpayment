@@ -1,0 +1,39 @@
+# Test Configuration - Uses H2 in-memory database
+spring:
+  application:
+    name: acquirer-server-test
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    database-platform: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false  # Disable Flyway for tests, use Hibernate auto-create
+
+# Disable mTLS for tests
+server:
+  ssl:
+    enabled: false
+  port: 0  # Random port
+
+# Disable fraud API for unit tests (use mock)
+fraud:
+  service:
+    url: http://localhost:8000
+    enabled: false
+
+# Security (simplified for tests)
+security:
+  hmac:
+    secret: "test-secret-key-for-unit-tests"
+  replay:
+    allowedSkewSeconds: 3600
+
+logging:
+  level:
+    ulug.musa.acquirer: DEBUG

@@ -2,20 +2,53 @@ server:
   port: 8443
   ssl:
     enabled: true
-
     key-store: classpath:ssl/acquirer-server.p12
     key-store-type: PKCS12
     key-store-password: serverpass
     key-alias: acquirer-server
-
     trust-store: classpath:ssl/acquirer-truststore.p12
     trust-store-type: PKCS12
     trust-store-password: trustpass
-
     client-auth: need
 
+# Security settings
 security:
   hmac:
     secret: "CHANGE_ME_DEV_SECRET_32+CHARS"
   replay:
     allowedSkewSeconds: 60
+
+# Database Configuration
+spring:
+  application:
+    name: acquirer-server
+  datasource:
+    url: jdbc:postgresql://localhost:5432/pos_payment
+    username: postgres
+    password: postgres
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+# Fraud Detection Service
+fraud:
+  service:
+    url: http://localhost:8000
+    enabled: true
+    timeout-ms: 100
+
+# Logging
+logging:
+  level:
+    ulug.musa.acquirer: INFO
+    ulug.musa.acquirer.fraud: DEBUG

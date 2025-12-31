@@ -1,7 +1,8 @@
 package ulug.musa.common.model;
 
-public class PaymentResponse
-{
+import java.util.List;
+
+public class PaymentResponse {
     // İstekten gelen traceId aynen geri döner (eşleştirme için)
     private String traceId;
 
@@ -20,7 +21,19 @@ public class PaymentResponse
     // İnsan okunur mesaj: APPROVED / DECLINED
     private String message;
 
-    public PaymentResponse() {}
+    // === FRAUD DETECTION FIELDS ===
+
+    // Fraud skoru (0.0 - 1.0)
+    private Double fraudScore;
+
+    // Risk seviyesi: MINIMAL, LOW, MEDIUM, HIGH, CRITICAL
+    private String riskLevel;
+
+    // Fraud nedenleri listesi (Türkçe açıklamalar)
+    private List<String> fraudReasons;
+
+    public PaymentResponse() {
+    }
 
     public PaymentResponse(
             String traceId,
@@ -28,8 +41,7 @@ public class PaymentResponse
             String responseCode,
             String authCode,
             String rrn,
-            String message
-    ) {
+            String message) {
         this.traceId = traceId;
         this.approved = approved;
         this.responseCode = responseCode;
@@ -38,21 +50,92 @@ public class PaymentResponse
         this.message = message;
     }
 
-    public String getTraceId() { return traceId; }
-    public void setTraceId(String traceId) { this.traceId = traceId; }
+    // Extended constructor with fraud fields
+    public PaymentResponse(
+            String traceId,
+            boolean approved,
+            String responseCode,
+            String authCode,
+            String rrn,
+            String message,
+            Double fraudScore,
+            String riskLevel,
+            List<String> fraudReasons) {
+        this(traceId, approved, responseCode, authCode, rrn, message);
+        this.fraudScore = fraudScore;
+        this.riskLevel = riskLevel;
+        this.fraudReasons = fraudReasons;
+    }
 
-    public boolean isApproved() { return approved; }
-    public void setApproved(boolean approved) { this.approved = approved; }
+    public String getTraceId() {
+        return traceId;
+    }
 
-    public String getResponseCode() { return responseCode; }
-    public void setResponseCode(String responseCode) { this.responseCode = responseCode; }
+    public void setTraceId(String traceId) {
+        this.traceId = traceId;
+    }
 
-    public String getAuthCode() { return authCode; }
-    public void setAuthCode(String authCode) { this.authCode = authCode; }
+    public boolean isApproved() {
+        return approved;
+    }
 
-    public String getRrn() { return rrn; }
-    public void setRrn(String rrn) { this.rrn = rrn; }
+    public void setApproved(boolean approved) {
+        this.approved = approved;
+    }
 
-    public String getMessage() { return message; }
-    public void setMessage(String message) { this.message = message; }
+    public String getResponseCode() {
+        return responseCode;
+    }
+
+    public void setResponseCode(String responseCode) {
+        this.responseCode = responseCode;
+    }
+
+    public String getAuthCode() {
+        return authCode;
+    }
+
+    public void setAuthCode(String authCode) {
+        this.authCode = authCode;
+    }
+
+    public String getRrn() {
+        return rrn;
+    }
+
+    public void setRrn(String rrn) {
+        this.rrn = rrn;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public Double getFraudScore() {
+        return fraudScore;
+    }
+
+    public void setFraudScore(Double fraudScore) {
+        this.fraudScore = fraudScore;
+    }
+
+    public String getRiskLevel() {
+        return riskLevel;
+    }
+
+    public void setRiskLevel(String riskLevel) {
+        this.riskLevel = riskLevel;
+    }
+
+    public List<String> getFraudReasons() {
+        return fraudReasons;
+    }
+
+    public void setFraudReasons(List<String> fraudReasons) {
+        this.fraudReasons = fraudReasons;
+    }
 }
