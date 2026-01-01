@@ -77,7 +77,11 @@ interface Scenario {
     amount: number;
     currency: string;
     panToken: string;
+    timestamp: number;
+    nonce: string;
     idempotencyKey: string;
+    keyVersion: number;
+    signature: string;
     merchantLat?: number;
     merchantLong?: number;
     merchantCategory?: string;
@@ -120,7 +124,11 @@ type SimulationState =
 // --- Scenario loader (manual JSON or live stream) ---
 const DEFAULT_TXN_TYPE: TxnType = "AUTH";
 const LIVE_STREAM_ENDPOINT = "/pos-client/stream";
+// Frontend only talks to pos-client; acquirer endpoints are not exposed in the browser.
 const POS_PAYMENT_ENDPOINT = "/api/pos/payments";
+const DEMO_KEY_VERSION = 1;
+const DEMO_NONCE_PLACEHOLDER = "generated-by-pos-client";
+const DEMO_SIGNATURE_PLACEHOLDER = "generated-by-pos-client-signature";
 
 type DemoScenarioPayload = {
   scenarios?: DemoScenario[];
@@ -136,7 +144,7 @@ type DemoScenario = {
     merchantLat: number;
     merchantLong: number;
     category: string;
-    timestamp: number;
+    timestamp?: number;
   };
   expected: {
     decision: Decision;
@@ -159,30 +167,6 @@ type DemoScenario = {
 const DEMO_HOME = { lat: 40.9912, long: 29.0228 };
 
 const toRadians = (value: number) => (value * Math.PI) / 180;
-
-const toBase64Url = (bytes: Uint8Array) => {
-  let binary = "";
-  bytes.forEach((byte) => {
-    binary += String.fromCharCode(byte);
-  });
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-};
-
-const randomBytes = (length: number) => {
-  const bytes = new Uint8Array(length);
-  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
-    crypto.getRandomValues(bytes);
-  } else {
-    for (let i = 0; i < length; i += 1) {
-      bytes[i] = Math.floor(Math.random() * 256);
-    }
-  }
-  return bytes;
-};
-
-const generateNonce = () => toBase64Url(randomBytes(16));
-
-const generateSignaturePlaceholder = () => toBase64Url(randomBytes(32));
 
 const distanceKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const earthRadiusKm = 6371;
@@ -208,15 +192,18 @@ const mapDecisionToResponseCode = (decision: Decision) => {
 };
 
 const mapDemoScenario = (scenario: DemoScenario, index: number): Scenario => {
-  const timestampMs = scenario.request.timestamp * 1000;
+  const timestampSeconds = Number.isFinite(scenario.request.timestamp)
+    ? (scenario.request.timestamp as number)
+    : Math.floor(Date.now() / 1000);
+  const timestampMs = timestampSeconds * 1000;
   const eventDate = Number.isFinite(timestampMs) ? new Date(timestampMs) : new Date();
   const hour = eventDate.getHours();
   const isNight = hour < 6 || hour >= 22 ? 1 : 0;
   const security = scenario.expected?.output?.securityCheck;
   const signaturePass = security?.signature?.toUpperCase() === "PASS";
   const demoPlaceholders = {
-    nonce: generateNonce(),
-    signature: generateSignaturePlaceholder(),
+    nonce: DEMO_NONCE_PLACEHOLDER,
+    signature: DEMO_SIGNATURE_PLACEHOLDER,
   };
 
   return {
@@ -229,7 +216,11 @@ const mapDemoScenario = (scenario: DemoScenario, index: number): Scenario => {
       amount: scenario.request.amount,
       currency: "TRY",
       panToken: scenario.request.panToken,
+      timestamp: timestampSeconds,
+      nonce: DEMO_NONCE_PLACEHOLDER,
       idempotencyKey: `idem-${scenario.request.traceId}`,
+      keyVersion: DEMO_KEY_VERSION,
+      signature: DEMO_SIGNATURE_PLACEHOLDER,
       merchantLat: scenario.request.merchantLat,
       merchantLong: scenario.request.merchantLong,
       merchantCategory: scenario.request.category,
@@ -278,11 +269,15 @@ const EMPTY_SCENARIO: Scenario = {
     txnType: DEFAULT_TXN_TYPE,
     amount: 0,
     currency: "TRY",
-      panToken: "--",
-      idempotencyKey: "--",
-      merchantLat: 0,
-      merchantLong: 0,
-      merchantCategory: "--",
+    panToken: "--",
+    timestamp: 0,
+    nonce: "--",
+    idempotencyKey: "--",
+    keyVersion: DEMO_KEY_VERSION,
+    signature: "--",
+    merchantLat: 0,
+    merchantLong: 0,
+    merchantCategory: "--",
     },
   securityCheck: {
     mtls: false,
@@ -314,6 +309,7 @@ const EMPTY_SCENARIO: Scenario = {
 const normalizeScenario = (payload: Partial<Scenario>): Scenario => {
   const request = payload.request ?? EMPTY_SCENARIO.request;
   const traceId = request.traceId ?? `trace-${Date.now()}`;
+  const timestampSeconds = request.timestamp ?? Math.floor(Date.now() / 1000);
   const response = payload.response ?? EMPTY_SCENARIO.response;
   const responseFeatures = response.features;
   const features = responseFeatures ?? payload.features ?? EMPTY_SCENARIO.features;
@@ -327,7 +323,11 @@ const normalizeScenario = (payload: Partial<Scenario>): Scenario => {
       amount: request.amount ?? 0,
       currency: request.currency ?? "TRY",
       panToken: request.panToken ?? "--",
+      timestamp: timestampSeconds,
+      nonce: request.nonce ?? DEMO_NONCE_PLACEHOLDER,
       idempotencyKey: request.idempotencyKey ?? `idem-${traceId}`,
+      keyVersion: request.keyVersion ?? DEMO_KEY_VERSION,
+      signature: request.signature ?? DEMO_SIGNATURE_PLACEHOLDER,
       merchantLat: request.merchantLat ?? 0,
       merchantLong: request.merchantLong ?? 0,
       merchantCategory: request.merchantCategory ?? "--",
@@ -869,14 +869,18 @@ const App = () => {
                             <div className="font-mono text-sm text-emerald-300 transition-all">{resolvedScenario.request.amount} {resolvedScenario.request.currency}</div>
                         </div>
                     </div>
-                    <div className="bg-slate-800 p-3 rounded font-mono text-xs text-slate-400 overflow-x-auto h-36">
+                    <div className="bg-slate-800 p-3 rounded font-mono text-xs text-slate-400 overflow-x-auto h-48">
                         <span className="text-purple-400">{"{"}</span><br/>
                         &nbsp;&nbsp;"terminalId": <span className="text-yellow-300">"{resolvedScenario.request.terminalId}"</span>,<br/>
                         &nbsp;&nbsp;"traceId": <span className="text-yellow-300">"{resolvedScenario.request.traceId}"</span>,<br/>
                         &nbsp;&nbsp;"amount": <span className="text-yellow-300">{resolvedScenario.request.amount}</span>,<br/>
                         &nbsp;&nbsp;"currency": <span className="text-yellow-300">"{resolvedScenario.request.currency}"</span>,<br/>
                         &nbsp;&nbsp;"panToken": <span className="text-yellow-300">"{resolvedScenario.request.panToken.substring(0,10)}..."</span>,<br/>
+                        &nbsp;&nbsp;"timestamp": <span className="text-yellow-300">{resolvedScenario.request.timestamp}</span>,<br/>
+                        &nbsp;&nbsp;"nonce": <span className="text-yellow-300">"{resolvedScenario.request.nonce}"</span>,<br/>
                         &nbsp;&nbsp;"idempotencyKey": <span className="text-yellow-300">"{resolvedScenario.request.idempotencyKey}"</span>,<br/>
+                        &nbsp;&nbsp;"keyVersion": <span className="text-yellow-300">{resolvedScenario.request.keyVersion}</span>,<br/>
+                        &nbsp;&nbsp;"signature": <span className="text-yellow-300">"{resolvedScenario.request.signature}"</span>,<br/>
                         &nbsp;&nbsp;"txnType": <span className="text-yellow-300">"{resolvedScenario.request.txnType}"</span>
                         <span className="text-purple-400">{"}"}</span>
                     </div>

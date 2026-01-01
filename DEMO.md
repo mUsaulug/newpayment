@@ -46,6 +46,14 @@
 
 ## Demo Scenarios
 
+## Frontend → pos-client → acquirer (Mandatory Flow)
+
+Frontend **must** send payment requests only to the pos-client (`/api/pos/payments`).
+The browser never calls the acquirer directly, and the acquirer does **not** expose CORS.
+Request signing (`timestamp`, `nonce`, `keyVersion`, `signature`) is handled in the
+pos-client. Direct frontend → acquirer calls are unsupported; if you ever need a
+direct path, it must be mediated by a backend signing proxy.
+
 > **Important:** `/api/*` requires:
 > - `X-Terminal-Id`, `X-Nonce`, `X-Timestamp`, `X-Signature` headers
 > - A body `signature` field calculated from the canonical request
