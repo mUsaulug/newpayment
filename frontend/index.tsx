@@ -72,6 +72,8 @@ interface Scenario {
   securityCheck: {
     mtls: boolean;
     headerHmac: boolean;
+    nonce: boolean;
+    timestamp: boolean;
     bodySignature: boolean;
   };
   features: {
@@ -97,184 +99,162 @@ type SimulationState =
   | "FINISHED"
   | "ERROR";
 
-// --- MOCK BACKEND DATA STREAM ---
-// Burası senin backend scriptinden gelecek olan JSON listesini temsil eder.
-// Frontend bu veriyi değiştirmez, sadece sırasıyla okur ve oynatır.
-// Backend sözleşmesi: txnType frontend'de sabit/konfigürasyonlu gönderilir.
+// --- Scenario loader (manual JSON or live stream) ---
 const DEFAULT_TXN_TYPE: TxnType = "AUTH";
+const LIVE_STREAM_ENDPOINT = "/pos-client/stream";
 
-const MOCK_DATA_STREAM: Scenario[] = [
-  {
-    id: "tx-1",
-    name: "Scenario 1: Standard Morning Coffee",
+type DemoScenarioPayload = {
+  scenarios?: DemoScenario[];
+};
+
+type DemoScenario = {
+  id: string;
+  class: string;
+  request: {
+    traceId: string;
+    panToken: string;
+    amount: number;
+    merchantLat: number;
+    merchantLong: number;
+    category: string;
+    timestamp: number;
+  };
+  expected: {
+    decision: Decision;
+    shortReason: string;
+    output: {
+      securityCheck: {
+        mtls: string;
+        signature: string;
+        timestampSkew: string;
+        idempotency: string;
+      };
+      fraudScore: number;
+      riskLevel: RiskLevel;
+      decision: Decision;
+      reasons: string[];
+    };
+  };
+};
+
+const DEMO_HOME = { lat: 40.9912, long: 29.0228 };
+
+const toRadians = (value: number) => (value * Math.PI) / 180;
+
+const distanceKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const earthRadiusKm = 6371;
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Number((earthRadiusKm * c).toFixed(2));
+};
+
+const mapDecisionToResponseCode = (decision: Decision) => {
+  switch (decision) {
+    case "APPROVED":
+      return "00";
+    case "PENDING":
+      return "01";
+    default:
+      return "05";
+  }
+};
+
+const mapDemoScenario = (scenario: DemoScenario, index: number): Scenario => {
+  const timestampMs = scenario.request.timestamp * 1000;
+  const eventDate = Number.isFinite(timestampMs) ? new Date(timestampMs) : new Date();
+  const hour = eventDate.getHours();
+  const isNight = hour < 6 || hour >= 22 ? 1 : 0;
+  const security = scenario.expected?.output?.securityCheck;
+  const signaturePass = security?.signature?.toUpperCase() === "PASS";
+
+  return {
+    id: scenario.id,
+    name: `${index + 1}. ${scenario.class} • ${scenario.request.category}`,
     request: {
-      terminalId: "TERM-001",
-      traceId: "trc-1001",
+      terminalId: `POS-${scenario.request.category.toUpperCase()}`,
+      traceId: scenario.request.traceId,
       txnType: DEFAULT_TXN_TYPE,
-      amount: 45.0,
+      amount: scenario.request.amount,
       currency: "TRY",
-      panToken: "tok_visa_4421",
-      idempotencyKey: "idem-trc-1001",
+      panToken: scenario.request.panToken,
+      idempotencyKey: `idem-${scenario.request.traceId}`,
     },
-    securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
-    features: { hour: 8, isNight: 0, distanceKm: 0.5, amtZscore: -0.2, cardAvgAmt: 50, timeSinceLastTx: 3600 },
-    response: { approved: true, responseCode: "00", message: "APPROVED", fraudScore: 0.01, riskLevel: "MINIMAL", fraudReasons: [] },
-    persisted: true, fallbackUsed: false,
-  },
-  {
-    id: "tx-2",
-    name: "Scenario 2: Lunch at City Center",
-    request: {
-      terminalId: "TERM-004",
-      traceId: "trc-1002",
-      txnType: DEFAULT_TXN_TYPE,
-      amount: 150.0,
-      currency: "TRY",
-      panToken: "tok_visa_4421",
-      idempotencyKey: "idem-trc-1002",
+    securityCheck: {
+      mtls: security?.mtls?.toUpperCase() === "PASS",
+      headerHmac: signaturePass,
+      nonce: security?.idempotency?.toUpperCase() === "PASS",
+      timestamp: security?.timestampSkew?.toUpperCase() === "PASS",
+      bodySignature: signaturePass,
     },
-    securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
-    features: { hour: 13, isNight: 0, distanceKm: 2.1, amtZscore: 0.1, cardAvgAmt: 50, timeSinceLastTx: 12000 },
-    response: { approved: true, responseCode: "00", message: "APPROVED", fraudScore: 0.03, riskLevel: "MINIMAL", fraudReasons: [] },
-    persisted: true, fallbackUsed: false,
-  },
-  {
-    id: "tx-3",
-    name: "Scenario 3: High Value Electronics (Risk)",
-    request: {
-      terminalId: "TERM-099",
-      traceId: "trc-1003",
-      txnType: DEFAULT_TXN_TYPE,
-      amount: 25000.0,
-      currency: "TRY",
-      panToken: "tok_master_8812",
-      idempotencyKey: "idem-trc-1003",
+    features: {
+      hour,
+      isNight,
+      distanceKm: distanceKm(
+        DEMO_HOME.lat,
+        DEMO_HOME.long,
+        scenario.request.merchantLat,
+        scenario.request.merchantLong
+      ),
+      amtZscore: Number((scenario.request.amount / 1000).toFixed(2)),
+      cardAvgAmt: Number((scenario.request.amount * 0.3 + 50).toFixed(2)),
+      timeSinceLastTx: 3600,
     },
-    securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
-    features: { hour: 15, isNight: 0, distanceKm: 15.0, amtZscore: 5.5, cardAvgAmt: 500, timeSinceLastTx: 120 },
-    response: { approved: false, responseCode: "09", message: "PENDING", fraudScore: 0.85, riskLevel: "HIGH", fraudReasons: ["High Amount", "Velocity Check"] },
-    persisted: true, fallbackUsed: false,
-  },
-  {
-    id: "tx-4",
-    name: "Scenario 4: Security Replay Attack",
-    request: {
-      terminalId: "TERM-XXX",
-      traceId: "trc-bad-actor",
-      txnType: DEFAULT_TXN_TYPE,
-      amount: 1.0,
-      currency: "TRY",
-      panToken: "tok_cloned_000",
-      idempotencyKey: "idem-trc-bad-actor",
+    response: {
+      approved: scenario.expected.output.decision === "APPROVED",
+      message: scenario.expected.output.decision,
+      responseCode: mapDecisionToResponseCode(scenario.expected.output.decision),
+      fraudScore: scenario.expected.output.fraudScore,
+      riskLevel: scenario.expected.output.riskLevel,
+      fraudReasons: scenario.expected.output.reasons ?? [],
     },
-    securityCheck: { mtls: true, headerHmac: false, nonce: false, timestamp: true, bodySignature: true }, // BACKEND SAYS FAIL
-    features: { hour: 3, isNight: 1, distanceKm: 999, amtZscore: 0, cardAvgAmt: 0, timeSinceLastTx: 0 },
-    response: { approved: false, responseCode: "05", message: "DECLINED", fraudScore: 0, riskLevel: "CRITICAL", fraudReasons: ["Security Violation"] },
-    persisted: false, fallbackUsed: false,
+    persisted: scenario.expected.output.decision !== "DECLINED",
+    fallbackUsed: false,
+  };
+};
+
+const EMPTY_SCENARIO: Scenario = {
+  id: "empty",
+  name: "No scenarios loaded",
+  request: {
+    terminalId: "--",
+    traceId: "--",
+    txnType: DEFAULT_TXN_TYPE,
+    amount: 0,
+    currency: "TRY",
+    panToken: "--",
+    idempotencyKey: "--",
   },
-  {
-    id: "tx-5",
-    name: "Scenario 5: Night Gas Station",
-    request: {
-      terminalId: "TERM-055",
-      traceId: "trc-1005",
-      txnType: DEFAULT_TXN_TYPE,
-      amount: 800.0,
-      currency: "TRY",
-      panToken: "tok_visa_4421",
-      idempotencyKey: "idem-trc-1005",
-    },
-    securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
-    features: { hour: 23, isNight: 1, distanceKm: 45.0, amtZscore: 1.2, cardAvgAmt: 50, timeSinceLastTx: 300 },
-    response: { approved: true, responseCode: "00", message: "APPROVED", fraudScore: 0.45, riskLevel: "MEDIUM", fraudReasons: ["Night Transaction"] },
-    persisted: true, fallbackUsed: false,
+  securityCheck: {
+    mtls: false,
+    headerHmac: false,
+    nonce: false,
+    timestamp: false,
+    bodySignature: false,
   },
-  {
-    id: "tx-6",
-    name: "Scenario 6: Timeout Fallback",
-    request: {
-      terminalId: "TERM-012",
-      traceId: "trc-1006",
-      txnType: DEFAULT_TXN_TYPE,
-      amount: 60.0,
-      currency: "TRY",
-      panToken: "tok_troy_1111",
-      idempotencyKey: "idem-trc-1006",
-    },
-    securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
-    features: { hour: 10, isNight: 0, distanceKm: 1.0, amtZscore: 0, cardAvgAmt: 60, timeSinceLastTx: 5000 },
-    response: { approved: true, responseCode: "00", message: "APPROVED", fraudScore: 0.1, riskLevel: "LOW", fraudReasons: ["System Timeout", "Fallback Applied"] },
-    persisted: true, fallbackUsed: true, // BACKEND SAYS FALLBACK USED
+  features: {
+    hour: 0,
+    isNight: 0,
+    distanceKm: 0,
+    amtZscore: 0,
+    cardAvgAmt: 0,
+    timeSinceLastTx: 0,
   },
-  {
-    id: "tx-7",
-    name: "Scenario 7: E-Com Subscription",
-    request: {
-      terminalId: "VIRT-001",
-      traceId: "trc-1007",
-      txnType: DEFAULT_TXN_TYPE,
-      amount: 199.90,
-      currency: "TRY",
-      panToken: "tok_visa_4421",
-      idempotencyKey: "idem-trc-1007",
-    },
-    securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
-    features: { hour: 9, isNight: 0, distanceKm: 0, amtZscore: 0.5, cardAvgAmt: 50, timeSinceLastTx: 86400 },
-    response: { approved: true, responseCode: "00", message: "APPROVED", fraudScore: 0.05, riskLevel: "MINIMAL", fraudReasons: [] },
-    persisted: true, fallbackUsed: false,
+  response: {
+    approved: false,
+    message: "NO_DATA",
+    responseCode: "--",
+    fraudScore: 0,
+    riskLevel: "LOW",
+    fraudReasons: [],
   },
-  {
-    id: "tx-8",
-    name: "Scenario 8: Stolen Card Attempt",
-    request: {
-      terminalId: "TERM-666",
-      traceId: "trc-1008",
-      txnType: DEFAULT_TXN_TYPE,
-      amount: 5000.0,
-      currency: "TRY",
-      panToken: "tok_black_9999",
-      idempotencyKey: "idem-trc-1008",
-    },
-    securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
-    features: { hour: 4, isNight: 1, distanceKm: 500.0, amtZscore: 10.0, cardAvgAmt: 100, timeSinceLastTx: 60 },
-    response: { approved: false, responseCode: "05", message: "DECLINED", fraudScore: 0.98, riskLevel: "CRITICAL", fraudReasons: ["Impossible Travel", "Amount Spike"] },
-    persisted: true, fallbackUsed: false,
-  },
-  {
-    id: "tx-9",
-    name: "Scenario 9: Grocery Shopping",
-    request: {
-      terminalId: "TERM-002",
-      traceId: "trc-1009",
-      txnType: DEFAULT_TXN_TYPE,
-      amount: 340.50,
-      currency: "TRY",
-      panToken: "tok_visa_4421",
-      idempotencyKey: "idem-trc-1009",
-    },
-    securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
-    features: { hour: 18, isNight: 0, distanceKm: 1.0, amtZscore: 0.8, cardAvgAmt: 50, timeSinceLastTx: 10000 },
-    response: { approved: true, responseCode: "00", message: "APPROVED", fraudScore: 0.12, riskLevel: "LOW", fraudReasons: [] },
-    persisted: true, fallbackUsed: false,
-  },
-  {
-    id: "tx-10",
-    name: "Scenario 10: Late Night Taxi",
-    request: {
-      terminalId: "POS-TAXI",
-      traceId: "trc-1010",
-      txnType: DEFAULT_TXN_TYPE,
-      amount: 220.0,
-      currency: "TRY",
-      panToken: "tok_visa_4421",
-      idempotencyKey: "idem-trc-1010",
-    },
-    securityCheck: { mtls: true, headerHmac: true, nonce: true, timestamp: true, bodySignature: true },
-    features: { hour: 2, isNight: 1, distanceKm: 5.0, amtZscore: 0.3, cardAvgAmt: 50, timeSinceLastTx: 500 },
-    response: { approved: true, responseCode: "00", message: "APPROVED", fraudScore: 0.25, riskLevel: "LOW", fraudReasons: [] },
-    persisted: true, fallbackUsed: false,
-  },
-];
+  persisted: false,
+  fallbackUsed: false,
+};
 
 // --- Components ---
 
@@ -336,22 +316,108 @@ const App = () => {
   const [state, setState] = useState<SimulationState>("IDLE");
   const [isPlaying, setIsPlaying] = useState(false);
   const [isAutoPlay, setIsAutoPlay] = useState(false);
+  const [feedMode, setFeedMode] = useState<"manual" | "live">("manual");
   const [speed, setSpeed] = useState(2); // Varsayılan hızı biraz artırdık akış için
   const [logs, setLogs] = useState<string[]>([]);
+  const [manualScenarios, setManualScenarios] = useState<Scenario[]>([]);
+  const [liveScenarios, setLiveScenarios] = useState<Scenario[]>([]);
+  const [dataError, setDataError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Görsel animasyon state'leri (Data üretmez, sadece animasyon zamanlamasını yönetir)
   const [secCheckIndex, setSecCheckIndex] = useState(-1);
   const [scoreProgress, setScoreProgress] = useState(0);
 
-  // MOCK STREAM'den sıradaki veriyi okuyoruz. Frontend karar vermez, backend'in verdiğini okur.
-  const scenario = MOCK_DATA_STREAM[currentScenarioIdx];
-  const fraudResult = mapFraudResult(scenario.response);
+  const isLiveMode = feedMode === "live";
+  const activeScenarios = isLiveMode ? liveScenarios : manualScenarios;
+  const scenario = activeScenarios[currentScenarioIdx];
+  const hasScenario = Boolean(scenario);
+  const resolvedScenario = scenario ?? EMPTY_SCENARIO;
+  const fraudResult = mapFraudResult(resolvedScenario.response);
+  const emptyMessage = !isLoading && !dataError && activeScenarios.length === 0
+    ? (isLiveMode
+        ? "Live mode has no data yet. Waiting for backend stream..."
+        : "No scenarios found in demo_scenarios.json.")
+    : null;
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll logs
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadManualScenarios = async () => {
+      setIsLoading(true);
+      setDataError(null);
+      try {
+        const response = await fetch("/demo_scenarios.json");
+        if (!response.ok) {
+          throw new Error(`Scenario load failed (${response.status})`);
+        }
+        const payload = (await response.json()) as DemoScenarioPayload;
+        const scenarios = payload?.scenarios;
+        if (!scenarios || scenarios.length === 0) {
+          throw new Error("Scenario list is empty.");
+        }
+        const mapped = scenarios.map(mapDemoScenario);
+        if (isActive) {
+          setManualScenarios(mapped);
+          setCurrentScenarioIdx(0);
+        }
+      } catch (error) {
+        if (isActive) {
+          setManualScenarios([]);
+          setDataError(
+            "Manual demo data could not be loaded. Verify demo_scenarios.json format."
+          );
+        }
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    if (!isLiveMode) {
+      loadManualScenarios();
+    }
+
+    return () => {
+      isActive = false;
+    };
+  }, [isLiveMode]);
+
+  useEffect(() => {
+    if (!isLiveMode) return;
+
+    setLiveScenarios([]);
+    setDataError(null);
+    setIsLoading(true);
+
+    const source = new EventSource(LIVE_STREAM_ENDPOINT);
+    source.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data) as Scenario;
+        setLiveScenarios((prev) => [...prev, payload]);
+        setIsLoading(false);
+      } catch (error) {
+        setDataError("Live stream data could not be parsed.");
+        setIsLoading(false);
+      }
+    };
+    source.onerror = () => {
+      setDataError("Live stream connection failed. Check backend stream/pos-client.");
+      setIsLoading(false);
+      source.close();
+    };
+
+    return () => {
+      source.close();
+    };
+  }, [isLiveMode]);
 
   const addLog = (msg: string) => {
     const time = new Date().toISOString().split("T")[1].slice(0, 8);
@@ -375,9 +441,13 @@ const App = () => {
 
   // State Machine: Sadece backend'den gelen veri durumlarını (States) görselleştirir.
   const nextStep = () => {
+    if (!hasScenario) {
+      setDataError("No scenario data available to play.");
+      return;
+    }
     switch (state) {
       case "IDLE":
-        addLog(`REQ [${scenario.request.traceId}] <-- RECEIVED from ${scenario.request.terminalId}`);
+        addLog(`REQ [${resolvedScenario.request.traceId}] <-- RECEIVED from ${resolvedScenario.request.terminalId}`);
         setState("VALIDATING");
         break;
       case "VALIDATING":
@@ -397,7 +467,7 @@ const App = () => {
         setState("PERSISTING");
         break;
       case "PERSISTING":
-        if (scenario.persisted) addLog(`DB: Transaction saved.`);
+        if (resolvedScenario.persisted) addLog(`DB: Transaction saved.`);
         else addLog("DB: Persistence skipped by backend rule.");
         setState("FINISHED");
         break;
@@ -410,7 +480,7 @@ const App = () => {
 
   // The Visualization Loop (Animasyon Döngüsü)
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isPlaying || !hasScenario) return;
 
     let timer: ReturnType<typeof setTimeout>;
     const currentSpeed = isAutoPlay ? Math.max(speed, 2) : speed; 
@@ -418,7 +488,7 @@ const App = () => {
 
     const runLoop = async () => {
       if (state === "IDLE") {
-        addLog(`REQ [${scenario.request.traceId}] <-- RECEIVED`);
+        addLog(`REQ [${resolvedScenario.request.traceId}] <-- RECEIVED`);
         setState("VALIDATING");
       } 
       
@@ -430,11 +500,11 @@ const App = () => {
             
             // Backend verisindeki sonucu kontrol et
             const checks = [
-                scenario.securityCheck.mtls,
-                scenario.securityCheck.headerHmac,
-                scenario.securityCheck.nonce,
-                scenario.securityCheck.timestamp,
-                scenario.securityCheck.bodySignature
+                resolvedScenario.securityCheck.mtls,
+                resolvedScenario.securityCheck.headerHmac,
+                resolvedScenario.securityCheck.nonce,
+                resolvedScenario.securityCheck.timestamp,
+                resolvedScenario.securityCheck.bodySignature
             ];
             
             // Eğer backend bu adımda false göndermişse görsel olarak durdur
@@ -468,7 +538,7 @@ const App = () => {
             }, 50 / currentSpeed);
         } else {
             timer = setTimeout(() => {
-                if (scenario.fallbackUsed) addLog("WARN: Backend responded with Fallback.");
+                if (resolvedScenario.fallbackUsed) addLog("WARN: Backend responded with Fallback.");
                 setState("DECIDING");
             }, baseDelay);
         }
@@ -483,7 +553,7 @@ const App = () => {
       
       else if (state === "PERSISTING") {
         timer = setTimeout(() => {
-          if (scenario.persisted) addLog("Transaction persisted to storage.");
+          if (resolvedScenario.persisted) addLog("Transaction persisted to storage.");
           setState("FINISHED");
         }, baseDelay);
       }
@@ -492,8 +562,13 @@ const App = () => {
         // AUTO PLAY LOGIC: Sıradaki backend verisine geç
         if (isAutoPlay) {
             timer = setTimeout(() => {
+                if (activeScenarios.length === 0) {
+                  setIsPlaying(false);
+                  setDataError("No scenarios available for auto play.");
+                  return;
+                }
                 // Listede bir sonrakine geç (Döngüsel)
-                setCurrentScenarioIdx(prev => (prev + 1) % MOCK_DATA_STREAM.length);
+                setCurrentScenarioIdx(prev => (prev + 1) % activeScenarios.length);
                 // State'leri sıfırla ama play modunu koru
                 setState("IDLE");
                 setSecCheckIndex(-1);
@@ -507,7 +582,7 @@ const App = () => {
 
     runLoop();
     return () => clearTimeout(timer);
-  }, [state, isPlaying, secCheckIndex, scoreProgress, scenario, speed, isAutoPlay]);
+  }, [state, isPlaying, secCheckIndex, scoreProgress, scenario, speed, isAutoPlay, activeScenarios.length]);
 
 
   // Görsel Yardımcılar
@@ -515,7 +590,7 @@ const App = () => {
     if (state === "IDLE") return null;
     if (state === "ERROR") {
         // Hata durumunda sadece hata noktasına kadar göster
-        const checks = [scenario.securityCheck.mtls, scenario.securityCheck.headerHmac, scenario.securityCheck.nonce, scenario.securityCheck.timestamp, scenario.securityCheck.bodySignature];
+        const checks = [resolvedScenario.securityCheck.mtls, resolvedScenario.securityCheck.headerHmac, resolvedScenario.securityCheck.nonce, resolvedScenario.securityCheck.timestamp, resolvedScenario.securityCheck.bodySignature];
         if (index <= secCheckIndex) return checks[index];
         return null;
     }
@@ -537,13 +612,13 @@ const App = () => {
       {/* --- HEADER --- */}
       <header className="flex flex-col md:flex-row items-start md:items-center justify-between bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-lg">
         <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg shadow-lg transition-colors ${isAutoPlay ? "bg-red-600 shadow-red-500/20" : "bg-blue-600 shadow-blue-500/20"}`}>
-                {isAutoPlay ? <Activity className="text-white w-6 h-6 animate-pulse" /> : <ShieldCheck className="text-white w-6 h-6" />}
+            <div className={`p-2 rounded-lg shadow-lg transition-colors ${isLiveMode ? "bg-red-600 shadow-red-500/20" : "bg-blue-600 shadow-blue-500/20"}`}>
+                {isLiveMode ? <Activity className="text-white w-6 h-6 animate-pulse" /> : <ShieldCheck className="text-white w-6 h-6" />}
             </div>
             <div>
-                <h1 className="text-xl font-bold tracking-tight text-white">Sentinel <span className={isAutoPlay ? "text-red-500" : "text-blue-500"}>POS</span> Dashboard</h1>
+                <h1 className="text-xl font-bold tracking-tight text-white">Sentinel <span className={isLiveMode ? "text-red-500" : "text-blue-500"}>POS</span> Dashboard</h1>
                 <p className="text-xs text-slate-400">
-                    {isAutoPlay ? "Live Stream from Backend" : "Single Request View"}
+                    {isLiveMode ? "Live Stream from Backend" : "Manual JSON Scenarios"}
                 </p>
             </div>
         </div>
@@ -559,37 +634,40 @@ const App = () => {
                         reset(true);
                         setCurrentScenarioIdx(Number(e.target.value));
                     }}
-                    disabled={isPlaying}
+                    disabled={isPlaying || isLiveMode || activeScenarios.length === 0}
                 >
-                    {MOCK_DATA_STREAM.map((s, i) => (
+                    {activeScenarios.map((s, i) => (
                         <option key={s.id} value={i}>{s.name.substring(0, 35)}</option>
                     ))}
                 </select>
+                <span className="text-[10px] text-slate-500">
+                    {isLiveMode ? `Live: ${LIVE_STREAM_ENDPOINT}` : "Manual: /demo_scenarios.json"}
+                </span>
             </div>
 
             <div className="flex items-center gap-2">
                 {/* AUTO PLAY TOGGLE */}
                 <button 
                     onClick={() => {
-                        const newAuto = !isAutoPlay;
-                        setIsAutoPlay(newAuto);
-                        if (newAuto) {
-                            if (state === "FINISHED" || state === "ERROR" || state === "IDLE") {
-                                reset(false);
-                                setIsPlaying(true);
-                            }
+                        const nextMode = isLiveMode ? "manual" : "live";
+                        setFeedMode(nextMode);
+                        if (nextMode === "live") {
+                            reset(false);
+                            setIsAutoPlay(true);
+                            setIsPlaying(true);
                         } else {
+                            setIsAutoPlay(false);
                             setIsPlaying(false);
                         }
                     }}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded transition font-semibold text-xs border ${
-                        isAutoPlay 
+                        isLiveMode 
                         ? "bg-red-900/30 text-red-400 border-red-800 animate-pulse" 
                         : "bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700"
                     }`}
                 >
-                   {isAutoPlay ? <Zap size={14} /> : <ZapOff size={14} />}
-                   {isAutoPlay ? "LIVE FEED" : "MANUAL"}
+                   {isLiveMode ? <Zap size={14} /> : <ZapOff size={14} />}
+                   {isLiveMode ? "LIVE FEED" : "MANUAL"}
                 </button>
 
                 <div className="w-px h-6 bg-slate-700 mx-1"></div>
@@ -599,6 +677,7 @@ const App = () => {
                         if(state === "FINISHED" || state === "ERROR") reset(false);
                         setIsPlaying(!isPlaying);
                     }}
+                    disabled={!hasScenario || isLoading || Boolean(dataError)}
                     className={`p-2 rounded hover:bg-slate-700 transition ${isPlaying ? "bg-amber-500/10 text-amber-500" : "bg-emerald-500/10 text-emerald-500"}`}
                 >
                     {isPlaying ? <Pause size={18} /> : <Play size={18} />}
@@ -606,7 +685,7 @@ const App = () => {
                 
                 <button 
                     onClick={nextStep}
-                    disabled={isPlaying || state === "FINISHED" || isAutoPlay}
+                    disabled={isPlaying || state === "FINISHED" || isAutoPlay || !hasScenario || isLoading || Boolean(dataError)}
                     className="p-2 rounded hover:bg-slate-700 text-slate-300 disabled:opacity-30"
                 >
                     <SkipForward size={18} />
@@ -634,6 +713,16 @@ const App = () => {
         </div>
       </header>
 
+      {(isLoading || dataError || emptyMessage) && (
+        <div className={`rounded-lg border px-4 py-2 text-sm ${
+          dataError ? "bg-red-900/30 border-red-700 text-red-200" : "bg-slate-900 border-slate-700 text-slate-300"
+        }`}>
+          {isLoading && <span>Loading scenarios...</span>}
+          {!isLoading && dataError && <span>{dataError}</span>}
+          {!isLoading && !dataError && emptyMessage && <span>{emptyMessage}</span>}
+        </div>
+      )}
+
       {/* --- MAIN GRID --- */}
       <main className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
         
@@ -652,19 +741,19 @@ const App = () => {
                     <div className="grid grid-cols-2 gap-2">
                         <div className="bg-slate-800 p-2 rounded">
                             <div className="text-[10px] text-slate-500">Terminal ID</div>
-                            <div className="font-mono text-sm text-blue-200 transition-all">{scenario.request.terminalId}</div>
+                            <div className="font-mono text-sm text-blue-200 transition-all">{resolvedScenario.request.terminalId}</div>
                         </div>
                         <div className="bg-slate-800 p-2 rounded">
                             <div className="text-[10px] text-slate-500">Amount</div>
-                            <div className="font-mono text-sm text-emerald-300 transition-all">{scenario.request.amount} {scenario.request.currency}</div>
+                            <div className="font-mono text-sm text-emerald-300 transition-all">{resolvedScenario.request.amount} {resolvedScenario.request.currency}</div>
                         </div>
                     </div>
                     <div className="bg-slate-800 p-3 rounded font-mono text-xs text-slate-400 overflow-x-auto h-28">
                         <span className="text-purple-400">{"{"}</span><br/>
-                        &nbsp;&nbsp;"traceId": <span className="text-yellow-300">"{scenario.request.traceId}"</span>,<br/>
-                        &nbsp;&nbsp;"txnType": <span className="text-yellow-300">"{scenario.request.txnType}"</span>,<br/>
-                        &nbsp;&nbsp;"pan": <span className="text-yellow-300">"{scenario.request.panToken.substring(0,10)}..."</span>,<br/>
-                        &nbsp;&nbsp;"idempotencyKey": <span className="text-yellow-300">"{scenario.request.idempotencyKey}"</span>
+                        &nbsp;&nbsp;"traceId": <span className="text-yellow-300">"{resolvedScenario.request.traceId}"</span>,<br/>
+                        &nbsp;&nbsp;"txnType": <span className="text-yellow-300">"{resolvedScenario.request.txnType}"</span>,<br/>
+                        &nbsp;&nbsp;"pan": <span className="text-yellow-300">"{resolvedScenario.request.panToken.substring(0,10)}..."</span>,<br/>
+                        &nbsp;&nbsp;"idempotencyKey": <span className="text-yellow-300">"{resolvedScenario.request.idempotencyKey}"</span>
                         <span className="text-purple-400">{"}"}</span>
                     </div>
                 </div>
@@ -710,32 +799,32 @@ const App = () => {
                 <div className="grid grid-cols-3 gap-3">
                     <FeatureCard 
                         label="Hour" 
-                        value={scenario.features.hour + ":00"} 
+                        value={resolvedScenario.features.hour + ":00"} 
                         highlight={state === "EXTRACTING"}
                     />
                     <FeatureCard 
                         label="Distance" 
-                        value={scenario.features.distanceKm + " km"} 
+                        value={resolvedScenario.features.distanceKm + " km"} 
                         highlight={state === "EXTRACTING"}
                     />
                     <FeatureCard 
                         label="Last Tx" 
-                        value={scenario.features.timeSinceLastTx + "s"} 
+                        value={resolvedScenario.features.timeSinceLastTx + "s"} 
                         highlight={state === "EXTRACTING"}
                     />
                     <FeatureCard 
                         label="Is Night" 
-                        value={scenario.features.isNight ? "YES" : "NO"} 
+                        value={resolvedScenario.features.isNight ? "YES" : "NO"} 
                         highlight={state === "EXTRACTING"}
                     />
                     <FeatureCard 
                         label="Amt Z-Score" 
-                        value={scenario.features.amtZscore} 
+                        value={resolvedScenario.features.amtZscore} 
                         highlight={state === "EXTRACTING"}
                     />
                     <FeatureCard 
                         label="Avg Amt" 
-                        value={scenario.features.cardAvgAmt} 
+                        value={resolvedScenario.features.cardAvgAmt} 
                         highlight={state === "EXTRACTING"}
                     />
                 </div>
@@ -747,7 +836,7 @@ const App = () => {
                     <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
                         <Zap size={16} /> Fraud AI Response
                     </h3>
-                    {scenario.fallbackUsed && (state === "SCORING" || state === "DECIDING" || state === "FINISHED") && (
+                    {resolvedScenario.fallbackUsed && (state === "SCORING" || state === "DECIDING" || state === "FINISHED") && (
                         <div className="flex items-center gap-1 bg-amber-900/30 text-amber-500 px-2 py-1 rounded text-xs border border-amber-800">
                             <AlertTriangle size={12} /> FALLBACK MODE
                         </div>
