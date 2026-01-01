@@ -460,7 +460,7 @@ const App = () => {
     setIsLoading(true);
 
     const source = new EventSource(LIVE_STREAM_ENDPOINT);
-    source.onmessage = (event) => {
+    const handleLiveEvent = (event: MessageEvent) => {
       try {
         const payload = JSON.parse(event.data) as Partial<Scenario>;
         setLiveScenarios((prev) => [...prev, normalizeScenario(payload)]);
@@ -470,6 +470,8 @@ const App = () => {
         setIsLoading(false);
       }
     };
+    source.onmessage = handleLiveEvent;
+    source.addEventListener("scenario", handleLiveEvent);
     source.onerror = () => {
       setDataError("Live stream connection failed. Check backend stream/pos-client.");
       setIsLoading(false);
@@ -477,6 +479,7 @@ const App = () => {
     };
 
     return () => {
+      source.removeEventListener("scenario", handleLiveEvent);
       source.close();
     };
   }, [isLiveMode]);
