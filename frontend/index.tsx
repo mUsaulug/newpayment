@@ -68,6 +68,10 @@ interface Scenario {
     currency: string;
     panToken: string;
     idempotencyKey: string;
+    timestamp: number;
+    nonce: string;
+    keyVersion: number;
+    signature: string;
   };
   securityCheck: {
     mtls: boolean;
@@ -141,6 +145,30 @@ const DEMO_HOME = { lat: 40.9912, long: 29.0228 };
 
 const toRadians = (value: number) => (value * Math.PI) / 180;
 
+const toBase64Url = (bytes: Uint8Array) => {
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+};
+
+const randomBytes = (length: number) => {
+  const bytes = new Uint8Array(length);
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < length; i += 1) {
+      bytes[i] = Math.floor(Math.random() * 256);
+    }
+  }
+  return bytes;
+};
+
+const generateNonce = () => toBase64Url(randomBytes(16));
+
+const generateSignaturePlaceholder = () => toBase64Url(randomBytes(32));
+
 const distanceKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const earthRadiusKm = 6371;
   const dLat = toRadians(lat2 - lat1);
@@ -171,6 +199,7 @@ const mapDemoScenario = (scenario: DemoScenario, index: number): Scenario => {
   const isNight = hour < 6 || hour >= 22 ? 1 : 0;
   const security = scenario.expected?.output?.securityCheck;
   const signaturePass = security?.signature?.toUpperCase() === "PASS";
+  const nonce = generateNonce();
 
   return {
     id: scenario.id,
@@ -183,6 +212,10 @@ const mapDemoScenario = (scenario: DemoScenario, index: number): Scenario => {
       currency: "TRY",
       panToken: scenario.request.panToken,
       idempotencyKey: `idem-${scenario.request.traceId}`,
+      timestamp: scenario.request.timestamp,
+      nonce,
+      keyVersion: 1,
+      signature: generateSignaturePlaceholder(),
     },
     securityCheck: {
       mtls: security?.mtls?.toUpperCase() === "PASS",
@@ -228,6 +261,10 @@ const EMPTY_SCENARIO: Scenario = {
     currency: "TRY",
     panToken: "--",
     idempotencyKey: "--",
+    timestamp: 0,
+    nonce: "--",
+    keyVersion: 1,
+    signature: "--",
   },
   securityCheck: {
     mtls: false,
@@ -254,6 +291,33 @@ const EMPTY_SCENARIO: Scenario = {
   },
   persisted: false,
   fallbackUsed: false,
+};
+
+const normalizeScenario = (payload: Partial<Scenario>): Scenario => {
+  const request = payload.request ?? EMPTY_SCENARIO.request;
+  const traceId = request.traceId ?? `trace-${Date.now()}`;
+  return {
+    id: payload.id ?? `live-${traceId}`,
+    name: payload.name ?? "Live Scenario",
+    request: {
+      terminalId: request.terminalId ?? "POS-LIVE",
+      traceId,
+      txnType: request.txnType ?? DEFAULT_TXN_TYPE,
+      amount: request.amount ?? 0,
+      currency: request.currency ?? "TRY",
+      panToken: request.panToken ?? "--",
+      idempotencyKey: request.idempotencyKey ?? `idem-${traceId}`,
+      timestamp: request.timestamp ?? Math.floor(Date.now() / 1000),
+      nonce: request.nonce ?? generateNonce(),
+      keyVersion: request.keyVersion ?? 1,
+      signature: request.signature ?? generateSignaturePlaceholder(),
+    },
+    securityCheck: payload.securityCheck ?? EMPTY_SCENARIO.securityCheck,
+    features: payload.features ?? EMPTY_SCENARIO.features,
+    response: payload.response ?? EMPTY_SCENARIO.response,
+    persisted: payload.persisted ?? false,
+    fallbackUsed: payload.fallbackUsed ?? false,
+  };
 };
 
 // --- Components ---
@@ -400,8 +464,8 @@ const App = () => {
     const source = new EventSource(LIVE_STREAM_ENDPOINT);
     source.onmessage = (event) => {
       try {
-        const payload = JSON.parse(event.data) as Scenario;
-        setLiveScenarios((prev) => [...prev, payload]);
+        const payload = JSON.parse(event.data) as Partial<Scenario>;
+        setLiveScenarios((prev) => [...prev, normalizeScenario(payload)]);
         setIsLoading(false);
       } catch (error) {
         setDataError("Live stream data could not be parsed.");
@@ -748,12 +812,16 @@ const App = () => {
                             <div className="font-mono text-sm text-emerald-300 transition-all">{resolvedScenario.request.amount} {resolvedScenario.request.currency}</div>
                         </div>
                     </div>
-                    <div className="bg-slate-800 p-3 rounded font-mono text-xs text-slate-400 overflow-x-auto h-28">
+                    <div className="bg-slate-800 p-3 rounded font-mono text-xs text-slate-400 overflow-x-auto h-40">
                         <span className="text-purple-400">{"{"}</span><br/>
                         &nbsp;&nbsp;"traceId": <span className="text-yellow-300">"{resolvedScenario.request.traceId}"</span>,<br/>
                         &nbsp;&nbsp;"txnType": <span className="text-yellow-300">"{resolvedScenario.request.txnType}"</span>,<br/>
                         &nbsp;&nbsp;"pan": <span className="text-yellow-300">"{resolvedScenario.request.panToken.substring(0,10)}..."</span>,<br/>
-                        &nbsp;&nbsp;"idempotencyKey": <span className="text-yellow-300">"{resolvedScenario.request.idempotencyKey}"</span>
+                        &nbsp;&nbsp;"idempotencyKey": <span className="text-yellow-300">"{resolvedScenario.request.idempotencyKey}"</span>,<br/>
+                        &nbsp;&nbsp;"timestamp": <span className="text-yellow-300">{resolvedScenario.request.timestamp}</span>,<br/>
+                        &nbsp;&nbsp;"nonce": <span className="text-yellow-300">"{resolvedScenario.request.nonce}"</span>,<br/>
+                        &nbsp;&nbsp;"keyVersion": <span className="text-yellow-300">{resolvedScenario.request.keyVersion}</span>,<br/>
+                        &nbsp;&nbsp;"signature": <span className="text-yellow-300">"{resolvedScenario.request.signature}"</span>
                         <span className="text-purple-400">{"}"}</span>
                     </div>
                 </div>
