@@ -32,6 +32,9 @@ public class PaymentResponse {
     // Fraud nedenleri listesi (Türkçe açıklamalar)
     private List<String> fraudReasons;
 
+    // Fraud feature snapshot for UI
+    private FraudFeatureSnapshot features;
+
     public PaymentResponse() {
     }
 
@@ -65,6 +68,21 @@ public class PaymentResponse {
         this.fraudScore = fraudScore;
         this.riskLevel = riskLevel;
         this.fraudReasons = fraudReasons;
+    }
+
+    public PaymentResponse(
+            String traceId,
+            boolean approved,
+            String responseCode,
+            String authCode,
+            String rrn,
+            String message,
+            Double fraudScore,
+            String riskLevel,
+            List<String> fraudReasons,
+            FraudFeatureSnapshot features) {
+        this(traceId, approved, responseCode, authCode, rrn, message, fraudScore, riskLevel, fraudReasons);
+        this.features = features;
     }
 
     public String getTraceId() {
@@ -137,5 +155,13 @@ public class PaymentResponse {
 
     public void setFraudReasons(List<String> fraudReasons) {
         this.fraudReasons = fraudReasons;
+    }
+
+    public FraudFeatureSnapshot getFeatures() {
+        return features;
+    }
+
+    public void setFeatures(FraudFeatureSnapshot features) {
+        this.features = features;
     }
 }

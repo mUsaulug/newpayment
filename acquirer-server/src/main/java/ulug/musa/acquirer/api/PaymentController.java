@@ -97,7 +97,8 @@ public class PaymentController {
                 message,
                 decision.fraudScore(),
                 decision.riskLevel(),
-                decision.reasons());
+                decision.reasons(),
+                decision.features());
     }
 
     /**
