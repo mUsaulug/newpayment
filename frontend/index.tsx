@@ -68,11 +68,12 @@ interface Scenario {
     currency: string;
     panToken: string;
     idempotencyKey: string;
-    timestamp: number;
+  };
+  demoPlaceholders?: {
     nonce: string;
-    keyVersion: number;
     signature: string;
   };
+  isDemo?: boolean;
   securityCheck: {
     mtls: boolean;
     headerHmac: boolean;
@@ -106,6 +107,7 @@ type SimulationState =
 // --- Scenario loader (manual JSON or live stream) ---
 const DEFAULT_TXN_TYPE: TxnType = "AUTH";
 const LIVE_STREAM_ENDPOINT = "/pos-client/stream";
+const POS_PAYMENT_ENDPOINT = "/api/pos/payments";
 
 type DemoScenarioPayload = {
   scenarios?: DemoScenario[];
@@ -199,7 +201,10 @@ const mapDemoScenario = (scenario: DemoScenario, index: number): Scenario => {
   const isNight = hour < 6 || hour >= 22 ? 1 : 0;
   const security = scenario.expected?.output?.securityCheck;
   const signaturePass = security?.signature?.toUpperCase() === "PASS";
-  const nonce = generateNonce();
+  const demoPlaceholders = {
+    nonce: generateNonce(),
+    signature: generateSignaturePlaceholder(),
+  };
 
   return {
     id: scenario.id,
@@ -212,11 +217,9 @@ const mapDemoScenario = (scenario: DemoScenario, index: number): Scenario => {
       currency: "TRY",
       panToken: scenario.request.panToken,
       idempotencyKey: `idem-${scenario.request.traceId}`,
-      timestamp: scenario.request.timestamp,
-      nonce,
-      keyVersion: 1,
-      signature: generateSignaturePlaceholder(),
     },
+    demoPlaceholders,
+    isDemo: true,
     securityCheck: {
       mtls: security?.mtls?.toUpperCase() === "PASS",
       headerHmac: signaturePass,
@@ -261,10 +264,6 @@ const EMPTY_SCENARIO: Scenario = {
     currency: "TRY",
     panToken: "--",
     idempotencyKey: "--",
-    timestamp: 0,
-    nonce: "--",
-    keyVersion: 1,
-    signature: "--",
   },
   securityCheck: {
     mtls: false,
@@ -307,11 +306,9 @@ const normalizeScenario = (payload: Partial<Scenario>): Scenario => {
       currency: request.currency ?? "TRY",
       panToken: request.panToken ?? "--",
       idempotencyKey: request.idempotencyKey ?? `idem-${traceId}`,
-      timestamp: request.timestamp ?? Math.floor(Date.now() / 1000),
-      nonce: request.nonce ?? generateNonce(),
-      keyVersion: request.keyVersion ?? 1,
-      signature: request.signature ?? generateSignaturePlaceholder(),
     },
+    demoPlaceholders: payload.demoPlaceholders,
+    isDemo: payload.isDemo ?? false,
     securityCheck: payload.securityCheck ?? EMPTY_SCENARIO.securityCheck,
     features: payload.features ?? EMPTY_SCENARIO.features,
     response: payload.response ?? EMPTY_SCENARIO.response,
@@ -398,6 +395,7 @@ const App = () => {
   const hasScenario = Boolean(scenario);
   const resolvedScenario = scenario ?? EMPTY_SCENARIO;
   const fraudResult = mapFraudResult(resolvedScenario.response);
+  const showDemoPlaceholder = Boolean(resolvedScenario.demoPlaceholders) && !isLiveMode;
   const emptyMessage = !isLoading && !dataError && activeScenarios.length === 0
     ? (isLiveMode
         ? "Live mode has no data yet. Waiting for backend stream..."
@@ -503,6 +501,30 @@ const App = () => {
     }
   };
 
+  const sendPaymentRequest = async () => {
+    if (!hasScenario) return;
+
+    try {
+      const response = await fetch(POS_PAYMENT_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(resolvedScenario.request),
+      });
+
+      if (!response.ok) {
+        addLog(`POS CLIENT ERROR: ${response.status} ${response.statusText}`);
+        return;
+      }
+
+      const payload = (await response.json()) as PaymentResponse;
+      addLog(`POS CLIENT OK: ${payload.responseCode} ${payload.message}`);
+    } catch (error) {
+      addLog("POS CLIENT ERROR: request failed.");
+    }
+  };
+
   // State Machine: Sadece backend'den gelen veri durumlarını (States) görselleştirir.
   const nextStep = () => {
     if (!hasScenario) {
@@ -512,6 +534,7 @@ const App = () => {
     switch (state) {
       case "IDLE":
         addLog(`REQ [${resolvedScenario.request.traceId}] <-- RECEIVED from ${resolvedScenario.request.terminalId}`);
+        sendPaymentRequest();
         setState("VALIDATING");
         break;
       case "VALIDATING":
@@ -553,6 +576,7 @@ const App = () => {
     const runLoop = async () => {
       if (state === "IDLE") {
         addLog(`REQ [${resolvedScenario.request.traceId}] <-- RECEIVED`);
+        sendPaymentRequest();
         setState("VALIDATING");
       } 
       
@@ -798,6 +822,11 @@ const App = () => {
                     <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
                         <CreditCard size={16} /> POS Client Request
                     </h3>
+                    {showDemoPlaceholder && (
+                      <span className="text-[10px] uppercase tracking-widest text-amber-300 bg-amber-900/30 border border-amber-700 px-2 py-1 rounded">
+                        demo placeholder
+                      </span>
+                    )}
                     <StatusBadge state={state === "IDLE" ? "PENDING" : state === "FINISHED" ? "SENT" : "PROCESSING"} />
                 </div>
                 
@@ -812,16 +841,15 @@ const App = () => {
                             <div className="font-mono text-sm text-emerald-300 transition-all">{resolvedScenario.request.amount} {resolvedScenario.request.currency}</div>
                         </div>
                     </div>
-                    <div className="bg-slate-800 p-3 rounded font-mono text-xs text-slate-400 overflow-x-auto h-40">
+                    <div className="bg-slate-800 p-3 rounded font-mono text-xs text-slate-400 overflow-x-auto h-36">
                         <span className="text-purple-400">{"{"}</span><br/>
+                        &nbsp;&nbsp;"terminalId": <span className="text-yellow-300">"{resolvedScenario.request.terminalId}"</span>,<br/>
                         &nbsp;&nbsp;"traceId": <span className="text-yellow-300">"{resolvedScenario.request.traceId}"</span>,<br/>
-                        &nbsp;&nbsp;"txnType": <span className="text-yellow-300">"{resolvedScenario.request.txnType}"</span>,<br/>
-                        &nbsp;&nbsp;"pan": <span className="text-yellow-300">"{resolvedScenario.request.panToken.substring(0,10)}..."</span>,<br/>
+                        &nbsp;&nbsp;"amount": <span className="text-yellow-300">{resolvedScenario.request.amount}</span>,<br/>
+                        &nbsp;&nbsp;"currency": <span className="text-yellow-300">"{resolvedScenario.request.currency}"</span>,<br/>
+                        &nbsp;&nbsp;"panToken": <span className="text-yellow-300">"{resolvedScenario.request.panToken.substring(0,10)}..."</span>,<br/>
                         &nbsp;&nbsp;"idempotencyKey": <span className="text-yellow-300">"{resolvedScenario.request.idempotencyKey}"</span>,<br/>
-                        &nbsp;&nbsp;"timestamp": <span className="text-yellow-300">{resolvedScenario.request.timestamp}</span>,<br/>
-                        &nbsp;&nbsp;"nonce": <span className="text-yellow-300">"{resolvedScenario.request.nonce}"</span>,<br/>
-                        &nbsp;&nbsp;"keyVersion": <span className="text-yellow-300">{resolvedScenario.request.keyVersion}</span>,<br/>
-                        &nbsp;&nbsp;"signature": <span className="text-yellow-300">"{resolvedScenario.request.signature}"</span>
+                        &nbsp;&nbsp;"txnType": <span className="text-yellow-300">"{resolvedScenario.request.txnType}"</span>
                         <span className="text-purple-400">{"}"}</span>
                     </div>
                 </div>
