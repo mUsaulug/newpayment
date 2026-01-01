@@ -35,6 +35,16 @@ interface PaymentResponse {
   fraudScore: number;
   riskLevel: RiskLevel;
   fraudReasons: string[];
+  features?: FraudFeatureSnapshot;
+}
+
+interface FraudFeatureSnapshot {
+  hour: number;
+  isNight: number;
+  distanceKm: number;
+  amtZscore: number;
+  cardAvgAmt: number;
+  timeSinceLastTx: number;
 }
 
 const mapFraudDecision = (response: PaymentResponse): Decision => {
@@ -304,6 +314,9 @@ const EMPTY_SCENARIO: Scenario = {
 const normalizeScenario = (payload: Partial<Scenario>): Scenario => {
   const request = payload.request ?? EMPTY_SCENARIO.request;
   const traceId = request.traceId ?? `trace-${Date.now()}`;
+  const response = payload.response ?? EMPTY_SCENARIO.response;
+  const responseFeatures = response.features;
+  const features = responseFeatures ?? payload.features ?? EMPTY_SCENARIO.features;
   return {
     id: payload.id ?? `live-${traceId}`,
     name: payload.name ?? "Live Scenario",
@@ -322,8 +335,8 @@ const normalizeScenario = (payload: Partial<Scenario>): Scenario => {
     demoPlaceholders: payload.demoPlaceholders,
     isDemo: payload.isDemo ?? false,
     securityCheck: payload.securityCheck ?? EMPTY_SCENARIO.securityCheck,
-    features: payload.features ?? EMPTY_SCENARIO.features,
-    response: payload.response ?? EMPTY_SCENARIO.response,
+    features,
+    response,
     persisted: payload.persisted ?? false,
     fallbackUsed: payload.fallbackUsed ?? false,
   };

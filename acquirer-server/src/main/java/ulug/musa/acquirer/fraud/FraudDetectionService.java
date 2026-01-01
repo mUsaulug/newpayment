@@ -7,6 +7,7 @@ import ulug.musa.acquirer.domain.TransactionHistory;
 import ulug.musa.acquirer.domain.UserProfile;
 import ulug.musa.acquirer.repository.TransactionHistoryRepository;
 import ulug.musa.acquirer.repository.UserProfileRepository;
+import ulug.musa.common.model.FraudFeatureSnapshot;
 import ulug.musa.common.model.PaymentRequest;
 
 import java.math.BigDecimal;
@@ -88,7 +89,15 @@ public class FraudDetectionService {
         log.info("Fraud evaluation complete: score={}, decision={}",
                 prediction.probability(), decision);
 
-        return new FraudDecision(decision, prediction.probability(), prediction.riskLevel(), reasons);
+        FraudFeatureSnapshot featureSnapshot = new FraudFeatureSnapshot(
+                features.hour(),
+                features.distanceKm(),
+                features.timeSinceLastTx(),
+                features.isNight(),
+                features.amtZscore(),
+                features.cardAvgAmt());
+
+        return new FraudDecision(decision, prediction.probability(), prediction.riskLevel(), reasons, featureSnapshot);
     }
 
     /**
