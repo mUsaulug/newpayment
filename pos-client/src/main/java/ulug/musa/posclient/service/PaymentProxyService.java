@@ -2,7 +2,6 @@ package ulug.musa.posclient.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -32,12 +31,12 @@ public class PaymentProxyService {
     private final SecurityProperties securityProperties;
     private final StreamService streamService;
 
-    public PaymentProxyService(RestTemplateBuilder restTemplateBuilder,
+    public PaymentProxyService(RestTemplate restTemplate,
                                ObjectMapper objectMapper,
                                PosClientProperties posClientProperties,
                                SecurityProperties securityProperties,
                                StreamService streamService) {
-        this.restTemplate = restTemplateBuilder.build();
+        this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
         this.posClientProperties = posClientProperties;
         this.securityProperties = securityProperties;
