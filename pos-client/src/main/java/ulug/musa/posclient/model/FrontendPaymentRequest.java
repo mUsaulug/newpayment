@@ -13,6 +13,9 @@ public class FrontendPaymentRequest {
     private String currency;
     private String panToken;
     private String idempotencyKey;
+    private Double merchantLat;
+    private Double merchantLong;
+    private String merchantCategory;
 
     public String getTerminalId() {
         return terminalId;
@@ -68,5 +71,29 @@ public class FrontendPaymentRequest {
 
     public void setIdempotencyKey(String idempotencyKey) {
         this.idempotencyKey = idempotencyKey;
+    }
+
+    public Double getMerchantLat() {
+        return merchantLat;
+    }
+
+    public void setMerchantLat(Double merchantLat) {
+        this.merchantLat = merchantLat;
+    }
+
+    public Double getMerchantLong() {
+        return merchantLong;
+    }
+
+    public void setMerchantLong(Double merchantLong) {
+        this.merchantLong = merchantLong;
+    }
+
+    public String getMerchantCategory() {
+        return merchantCategory;
+    }
+
+    public void setMerchantCategory(String merchantCategory) {
+        this.merchantCategory = merchantCategory;
     }
 }
