@@ -68,6 +68,9 @@ interface Scenario {
     currency: string;
     panToken: string;
     idempotencyKey: string;
+    merchantLat?: number;
+    merchantLong?: number;
+    merchantCategory?: string;
   };
   demoPlaceholders?: {
     nonce: string;
@@ -217,6 +220,9 @@ const mapDemoScenario = (scenario: DemoScenario, index: number): Scenario => {
       currency: "TRY",
       panToken: scenario.request.panToken,
       idempotencyKey: `idem-${scenario.request.traceId}`,
+      merchantLat: scenario.request.merchantLat,
+      merchantLong: scenario.request.merchantLong,
+      merchantCategory: scenario.request.category,
     },
     demoPlaceholders,
     isDemo: true,
@@ -262,9 +268,12 @@ const EMPTY_SCENARIO: Scenario = {
     txnType: DEFAULT_TXN_TYPE,
     amount: 0,
     currency: "TRY",
-    panToken: "--",
-    idempotencyKey: "--",
-  },
+      panToken: "--",
+      idempotencyKey: "--",
+      merchantLat: 0,
+      merchantLong: 0,
+      merchantCategory: "--",
+    },
   securityCheck: {
     mtls: false,
     headerHmac: false,
@@ -306,6 +315,9 @@ const normalizeScenario = (payload: Partial<Scenario>): Scenario => {
       currency: request.currency ?? "TRY",
       panToken: request.panToken ?? "--",
       idempotencyKey: request.idempotencyKey ?? `idem-${traceId}`,
+      merchantLat: request.merchantLat ?? 0,
+      merchantLong: request.merchantLong ?? 0,
+      merchantCategory: request.merchantCategory ?? "--",
     },
     demoPlaceholders: payload.demoPlaceholders,
     isDemo: payload.isDemo ?? false,
