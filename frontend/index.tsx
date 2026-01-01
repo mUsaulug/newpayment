@@ -145,8 +145,29 @@ const DEMO_HOME = { lat: 40.9912, long: 29.0228 };
 
 const toRadians = (value: number) => (value * Math.PI) / 180;
 
-const NONCE_PLACEHOLDER = "generated-by-pos-client";
-const SIGNATURE_PLACEHOLDER = "generated-by-pos-client";
+const toBase64Url = (bytes: Uint8Array) => {
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+};
+
+const randomBytes = (length: number) => {
+  const bytes = new Uint8Array(length);
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < length; i += 1) {
+      bytes[i] = Math.floor(Math.random() * 256);
+    }
+  }
+  return bytes;
+};
+
+const generateNonce = () => toBase64Url(randomBytes(16));
+
+const generateSignaturePlaceholder = () => toBase64Url(randomBytes(32));
 
 const distanceKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const earthRadiusKm = 6371;
@@ -178,6 +199,8 @@ const mapDemoScenario = (scenario: DemoScenario, index: number): Scenario => {
   const isNight = hour < 6 || hour >= 22 ? 1 : 0;
   const security = scenario.expected?.output?.securityCheck;
   const signaturePass = security?.signature?.toUpperCase() === "PASS";
+  const nonce = generateNonce();
+
   return {
     id: scenario.id,
     name: `${index + 1}. ${scenario.class} • ${scenario.request.category}`,
@@ -190,9 +213,9 @@ const mapDemoScenario = (scenario: DemoScenario, index: number): Scenario => {
       panToken: scenario.request.panToken,
       idempotencyKey: `idem-${scenario.request.traceId}`,
       timestamp: scenario.request.timestamp,
-      nonce: NONCE_PLACEHOLDER,
+      nonce,
       keyVersion: 1,
-      signature: SIGNATURE_PLACEHOLDER,
+      signature: generateSignaturePlaceholder(),
     },
     securityCheck: {
       mtls: security?.mtls?.toUpperCase() === "PASS",
@@ -285,9 +308,9 @@ const normalizeScenario = (payload: Partial<Scenario>): Scenario => {
       panToken: request.panToken ?? "--",
       idempotencyKey: request.idempotencyKey ?? `idem-${traceId}`,
       timestamp: request.timestamp ?? Math.floor(Date.now() / 1000),
-      nonce: request.nonce ?? NONCE_PLACEHOLDER,
+      nonce: request.nonce ?? generateNonce(),
       keyVersion: request.keyVersion ?? 1,
-      signature: request.signature ?? SIGNATURE_PLACEHOLDER,
+      signature: request.signature ?? generateSignaturePlaceholder(),
     },
     securityCheck: payload.securityCheck ?? EMPTY_SCENARIO.securityCheck,
     features: payload.features ?? EMPTY_SCENARIO.features,
