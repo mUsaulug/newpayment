@@ -6,6 +6,11 @@ pos-client:
   acquirer:
     base-url: https://localhost:8443
   key-version: 1
+  ssl:
+    key-store: classpath:ssl/pos-client.p12
+    key-store-password: clientpass
+    trust-store: classpath:ssl/pos-truststore.p12
+    trust-store-password: trustpass
 
 security:
   hmac:
