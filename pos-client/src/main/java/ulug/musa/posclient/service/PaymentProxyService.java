@@ -30,15 +30,18 @@ public class PaymentProxyService {
     private final ObjectMapper objectMapper;
     private final PosClientProperties posClientProperties;
     private final SecurityProperties securityProperties;
+    private final StreamService streamService;
 
     public PaymentProxyService(RestTemplateBuilder restTemplateBuilder,
                                ObjectMapper objectMapper,
                                PosClientProperties posClientProperties,
-                               SecurityProperties securityProperties) {
+                               SecurityProperties securityProperties,
+                               StreamService streamService) {
         this.restTemplate = restTemplateBuilder.build();
         this.objectMapper = objectMapper;
         this.posClientProperties = posClientProperties;
         this.securityProperties = securityProperties;
+        this.streamService = streamService;
     }
 
     public ResponseEntity<PaymentResponse> forwardPayment(FrontendPaymentRequest frontendRequest) {
@@ -51,7 +54,11 @@ public class PaymentProxyService {
         String url = posClientProperties.acquirer().baseUrl() + "/api/payments";
         HttpEntity<String> entity = new HttpEntity<>(bodyJson, headers);
         ResponseEntity<PaymentResponse> response = restTemplate.exchange(url, HttpMethod.POST, entity, PaymentResponse.class);
-        return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
+        PaymentResponse responseBody = response.getBody();
+        if (responseBody != null) {
+            streamService.publish(StreamScenarioFactory.from(frontendRequest, responseBody));
+        }
+        return ResponseEntity.status(response.getStatusCode()).body(responseBody);
     }
 
     private PaymentRequest buildPaymentRequest(FrontendPaymentRequest frontendRequest) {
