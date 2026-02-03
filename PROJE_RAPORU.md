@@ -1,245 +1,138 @@
-# Proje Raporu: Güvenli POS Ödeme ve Sahtecilik Tespit Sistemi
+# Proje Raporu: Güvenli POS Ödeme Kanalı ve Fraud Tespit Sistemi
 
-**Tarih:** 31 Aralık 2024
-**Hazırlayan:** Antigravity (AI Assistant)
+**Kapsam:** Bu rapor, `/workspace/newpayment` reposundaki tüm bileşenleri uçtan uca inceler; mimari akış, güvenlik, veri modeli, fraud algoritması ve operasyonel çalıştırma adımlarını detaylandırır.
 
-## İçindekiler
-1. [Proje Özeti](#1-proje-özeti)
-2. [Sistem Mimarisi](#2-sistem-mimarisi)
-3. [Teknoloji Yığını](#3-teknoloji-yığını)
-4. [Modüllerin Detaylı Analizi](#4-modüllerin-detaylı-analizi)
-5. [Veri Modeli ve Veritabanı](#5-veri-modeli-ve-veritabanı)
-6. [İş Akışları (Workflows)](#6-iş-akışları)
-7. [Sahtecilik Tespit Sistemi (Fraud Detection)](#7-sahtecilik-tespit-sistemi)
-8. [Kurulum ve Çalıştırma](#8-kurulum-ve-çalıştırma)
+## 1) Yüksek Seviye Özet
 
----
+Bu proje, POS tarafında oluşturulan ödeme isteklerinin güvenli şekilde imzalanıp acquirer sunucusuna iletildiği, fraud modelinden skor alındığı ve kararın hem UI hem de veritabanına işlendiği bir demo altyapısıdır. Temel bileşenler:
 
-## 1. Proje Özeti
+* **Frontend (React/Vite):** Ödeme senaryolarını, güvenlik aşamalarını ve fraud kararlarını görselleştirir.
+* **POS Client (Spring Boot):** Frontend’den gelen istekleri HMAC imzası ile acquirer’a iletir ve canlı akış yayınlar.
+* **Acquirer Server (Spring Boot):** Ödeme doğrulaması, fraud değerlendirmesi ve veritabanı kayıtlarını yönetir.
+* **Fraud Agent (FastAPI):** XGBoost modeline dayalı fraud skoru üretir; model yoksa kurallı fallback uygular.
+* **Common Modül:** Ortak DTO’lar ve güvenlik yardımcıları.
 
-Bu proje, güvenli bir POS (Point of Sale) ödeme kanalı simülasyonu ve entegre bir yapay zeka tabanlı sahtecilik tespit (fraud detection) sistemini içeren kapsamlı bir finansal teknoloji çözümüdür.
+## 2) Depo Yapısı ve Modüller
 
-Sistem, POS terminallerinden gelen ödeme isteklerini karşılar, bu istekleri işler ve gerçek zamanlı olarak bir sahtecilik risk analizine tabi tutar. Analiz sonucunda işlem ya onaylanır (APPROVED), reddedilir (DECLINED) ya da incelemeye alınır. Amaç, modern ödeme sistemlerinin güvenliğini artırmak ve yapay zeka desteğiyle finansal kayıpları minimize etmektir.
-
----
-
-## 2. Sistem Mimarisi
-
-Proje, mikroservis mimarisine benzer modüler bir yapıda tasarlanmıştır. Temel olarak üç ana bileşenden oluşur:
-
-1.  **Acquirer Server (Ödeme Sunucusu):** Sistemin beyni olan Java tabanlı backend uygulamasıdır. Ödeme isteklerini karşılar, veritabanı işlemlerini yönetir ve Fraud Agent ile iletişim kurar.
-2.  **Fraud Agent (Sahtecilik Ajanı):** Python ile geliştirilmiş, makine öğrenmesi (ML) tabanlı risk analiz servisidir. Gelen işlem verilerini analiz ederek bir risk skoru üretir.
-3.  **Veritabanı (PostgreSQL):** Kullanıcı profilleri, işlem geçmişi ve sistem loglarının tutulduğu ilişkisel veritabanıdır.
-
-### Mimari Diyagramı (Kavramsal)
-
-```mermaid
-graph TD
-    POS[POS Client / İstemci] -->|HTTPS POST /api/payments| AS[Acquirer Server (Java)]
-    AS -->|Geçmiş Veri Sorgusu| DB[(PostgreSQL)]
-    AS -->|Risk Analiz İsteği| FA[Fraud Agent (Python)]
-    FA -->|ML Model Tahmini| FA
-    FA -->|Risk Skoru & Karar| AS
-    AS -->|Sonuç (Onay/Ret)| POS
+```
+acquirer-server/     # Spring Boot acquirer + fraud orchestration + DB
+pos-client/          # POS proxy + mTLS + SSE stream
+fraudAgent/          # FastAPI + XGBoost model servisi
+frontend/            # Vite/React UI
+common/              # Ortak DTO + güvenlik yardımcıları
+scripts/certs/       # mTLS sertifikaları (p12, crt, key)
 ```
 
----
+## 3) Uçtan Uca İş Akışı
 
-## 3. Teknoloji Yığını
+Aşağıdaki akış ödeme isteğinin sistem içinde nasıl işlendiğini gösterir:
 
-Projede endüstri standardı, güvenilir ve modern teknolojiler kullanılmıştır:
+1. **Frontend → POS Client:** UI `/api/pos/payments` endpoint’ine istek gönderir (frontend doğrudan acquirer’a çağrı yapmaz).
+2. **POS Client → Acquirer:** POS client, `PaymentRequest` oluşturur; gövde ve header imzalarını üretir, mTLS ile acquirer’a gönderir.
+3. **Acquirer Güvenlik Katmanı:** Security filter header’ları doğrular; `RequestSecurityService` ise gövde imzası, timestamp ve nonce kontrollerini uygular.
+4. **Fraud Değerlendirme:** `FraudDetectionService` profil + işlem geçmişi + merchant bilgilerini alır, feature’ları çıkarır ve Fraud Agent’a gönderir.
+5. **Karar ve Kayıt:** Skor threshold’larına göre APPROVED/PENDING/DECLINED kararı çıkar; `transaction_history` tablosuna kayıt atılır, gerekiyorsa `user_profiles` güncellenir.
+6. **POS Client → Frontend:** Yanıt UI’ya iletilir, ayrıca SSE ile canlı senaryo akışı yayınlanır.
 
-### Backend (Acquirer Server)
-*   **Dil:** Java 17+
-*   **Framework:** Spring Boot 3.5.9 (Web, Data JPA, Validation, Actuator)
-*   **Build Tool:** Gradle (Kotlin DSL veya Groovy)
-*   **Veritabanı Migrasyonu:** Flyway
-*   **Testing:** JUnit 5
+## 4) Güvenlik Mimarisinin Detayları
 
-### Fraud Detection (Fraud Agent)
-*   **Dil:** Python 3.10+
-*   **Web Framework:** (Muhtemelen FastAPI veya Flask - `fraud_api.py` üzerinden çalışır)
-*   **ML Kütüphaneleri:** XGBoost (Tahminleme), Pandas (Veri İşleme), Scikit-learn
-*   **Model:** Eğitilmiş XGBoost sınıflandırma modeli
+### 4.1 mTLS (Karşılıklı Sertifika)
 
-### Veri ve Altyapı
-*   **Veritabanı:** PostgreSQL 15 (Docker üzerinde çalışır)
-*   **Konteynerizasyon:** Docker (Veritabanı servisi için)
+* Acquirer server HTTPS üzerinde çalışır ve client-auth zorunludur.
+* POS client, `pos-client.p12` ile acquirer’a bağlanır ve truststore üzerinden doğrulama yapar.
 
----
+### 4.2 HMAC İmza Yapısı
 
-## 4. Modüllerin Detaylı Analizi
+* Gövde imzası: `terminalId|traceId|txnType|amount|currency|panToken|timestamp|nonce|idempotencyKey|keyVersion` formatında üretilir.
+* Header imzası: `terminalId|nonce|timestamp|body` formatında üretilir.
+* İmzalar `HMAC-SHA256` ile Base64 URL-safe formatında üretilir ve doğrulanır.
 
-### 4.1. Acquirer Server (`acquirer-server`)
-Ödeme ekosisteminin merkezidir.
-*   **PaymentController:** `/api/payments` endpoint'i üzerinden gelen JSON formatındaki ödeme isteklerini karşılar.
-*   **Domain Modelleri:** `UserProfile` (Kullanıcı demografik verileri) ve `TransactionHistory` (Geçmiş işlemler) varlıklarını yönetir.
-*   **Entegrasyon:** `FraudServiceClient` (varsayımsal isimlendirme) aracılığıyla Python servisine HTTP çağrıları yapar.
+### 4.3 Replay / Timestamp Kontrolleri
 
-### 4.2. Fraud Agent (`fraudAgent`)
-Analitik zekayı barındırır.
-*   **API:** HTTP üzerinden veri alır.
-*   **Özellik Çıkarımı (Feature Engineering):** Ham işlem verisinden (tutar, zaman, konum) modelin anlayacağı öznitelikleri (örneğin: "son 1 saatteki işlem sayısı", "ortalama tutardan sapma oranı") türetir.
-*   **Karar Mekanizması:** 0 ile 1 arasında bir skor üretir. (Örn: >0.85 ise Ret).
+* `nonce` formatı regex ile doğrulanır; timestamp ile skew kontrolü yapılır.
+* Acquirer tarafında nonce tekrar kullanımına karşı `NonceStore` kullanılır.
 
-### 4.3. Common (`common`)
-*   Projeler arası paylaşılan veri transfer objeleri (DTO), sabitler ve yardımcı sınıfları içerir. Bu sayede kod tekrarı önlenir.
+## 5) Fraud Algoritması ve Feature Engineering
 
----
+### 5.1 Feature Üretimi
 
-## 5. Veri Modeli ve Veritabanı
+`FraudFeatureExtractor` toplamda 35 feature üretir. Başlıca gruplar:
 
-Veritabanı şeması, sahtecilik tespiti için kritik olan tarihsel veriyi saklayacak şekilde optimize edilmiştir.
+* **Zaman feature’ları:** `hour`, `dayOfWeek`, `isNight`, `isWeekend`.
+* **Tutar feature’ları:** `amt`, `amtLog`, `amtZscore`.
+* **Lokasyon feature’ları:** `distanceKm`, `distanceLog`, `cityPopLog`.
+* **Davranış feature’ları:** `cardTxCount`, `timeSinceLastTx`, `amtRollingMean3` vb.
+* **Kategori encoding:** `categoryEncoded`, `genderEncoded`, `stateEncoded`.
 
-### Tablo: `user_profiles`
-Kullanıcıların davranışsal profillerini saklar.
-*   `id`: Benzersiz kayıt ID'si.
-*   `pan_token`: Kredi kartı numarasının tokenize edilmiş hali (Güvenlik için).
-*   `avg_amount`: Kullanıcının ortalama harcama tutarı.
-*   `access_locations`: Sık kullanılan lokasyonlar.
+### 5.2 Fraud Karar Eşikleri
 
-### Tablo: `transaction_history`
-Yapılan her işlemin kaydını tutar. ML modelinin "geçmiş davranışları" öğrenmesi için bu tablo kritiktir.
-*   `amount`: İşlem tutarı.
-*   `merchant_category`: Harcama yapılan kategori (Market, Elektronik vb.).
-*   `is_fraud`: İşlemin fraud olup olmadığı (Eğitim verisi için etiket).
-*   `home_lat`, `home_long`: Kullanıcının ev adresi koordinatları.
+* **DECLINED:** skor ≥ 0.85
+* **PENDING:** skor ≥ 0.65
+* **APPROVED:** diğer durumlar
 
----
+Karar mantığı `FraudDetectionService` içinde uygulanır.
 
-## 6. İş Akışları
+### 5.3 Fraud Agent (FastAPI + XGBoost)
 
-### 6.1. Ödeme İşlem Akışı (Happy Path)
-1.  **İstek Başlatma:** POS terminali veya istemci, şifreli bir ödeme isteği oluşturur.
-2.  **Doğrulama:** Acquirer Server, isteğin imzasını (signature), zaman damgasını ve formatını doğrular.
-3.  **Profil Yükleme:** İşlemi yapan kartın (`panToken`) geçmiş profili veritabanından çekilir.
-4.  **Risk Analizi:**
-    *   Mevcut işlem verisi + Kullanıcı Profili verisi paketlenir.
-    *   Python Fraud API'ye gönderilir.
-5.  **Karar:**
-    *   ML modeli bir skor (örn: 0.05) döndürür.
-    *   Skor eşik değerin altındaysa (örn: < 0.30), işlem **ONAYLANIR**.
-6.  **Kayıt:** İşlem sonucu veritabanına kaydedilir ve kullanıcının profili (ortalama harcama vb.) güncellenir.
-7.  **Yanıt:** İstemciye "APPROVED" yanıtı dönülür.
+* `/predict` endpoint’inde model `xgboost_fraud_model_latest.pkl` ile skor üretilir.
+* Model yüklenemezse rule-based fallback devreye girer.
 
-### 6.2. Sahtecilik Yakalama Senaryosu
-*   Eğer kullanıcı normalde İstanbul'da harcama yapıyorken, aniden Londra'dan yüksek tutarlı bir elektronik harcaması gelirse:
-    1.  Konum farkı (Distance feature) yüksek çıkar.
-    2.  Tutar sapması (Amount deviation) yüksek çıkar.
-    3.  ML modeli yüksek bir risk skoru (örn: 0.95) üretir.
-    4.  Sistem işlemi otomatik olarak **REDDEDER (DECLINED)**.
+## 6) Veri Modeli (PostgreSQL)
 
-### 6.3. Storyboard: Sahne Akışı (POS → Security → Feature → Fraud → Decision/DB)
+### 6.1 `user_profiles`
+* `pan_token`: kart kimliği
+* `avg_amount`, `transaction_count`: davranış istatistikleri
+* `home_lat`, `home_long`: kullanıcı konumu
 
-#### Akış Mantığı
-*   Bir request akışı sırayla sahnelerden geçer.
-*   Her sahne tamamlandığında bir sonraki sahne aktifleşir.
-*   Hata durumunda akış bulunduğu sahnede durur ve hata notu gösterilir.
+### 6.2 `transaction_history`
+* Fraud skoru, risk seviyesi, karar ve merchant bilgisi saklanır.
+* `idempotency_key` ile tekrarlı istekler tespit edilir.
 
-#### 1 Sayfa Storyboard (Kutular + Oklar)
-```mermaid
-flowchart LR
-    POS[POS Client] --> SEC[Security Validation]
-    SEC --> FEAT[Feature Extraction]
-    FEAT --> FRAUD[Fraud Engine]
-    FRAUD --> DEC[Decision & Persistence]
-```
+### 6.3 Demo Veri
 
-#### Kutular Altında Gösterilecek Minimum Metin/İkon Listesi
+`V2__demo_data.sql` içinde örnek kullanıcılar ve işlem geçmişi bulunur.
 
-**POS Client**
-*   terminalId
-*   traceId
-*   amount
-*   panToken
-*   timestamp
-*   nonce
-*   Aksiyon: **Generate Request** → request state: **Created**
+## 7) API Envanteri
 
-**Security Validation**
-*   mTLS ✅/❌
-*   Header HMAC ✅/❌
-*   Nonce format ✅/❌
-*   Timestamp skew ✅/❌
-*   Body signature ✅/❌
-*   Aksiyon: **Validating...** → **Passed/Failed** badge'leri
+### 7.1 Acquirer Server
+| Endpoint | Method | Açıklama |
+| --- | --- | --- |
+| `/api/payments` | POST | Ödeme isteğini alır, fraud değerlendirme yapar. | 
+| `/api/echo` | POST | Text echo; güvenlik filtrelerinden geçer. |
+| `/ping` | GET | Basit sağlık endpoint’i. |
 
-**Feature Extraction**
-*   hour
-*   isNight
-*   distanceKm
-*   amtZscore
-*   cardAvgAmt
-*   timeSinceLastTx
-*   Aksiyon: **Features ready** status
+### 7.2 POS Client
+| Endpoint | Method | Açıklama |
+| --- | --- | --- |
+| `/api/pos/payments` | POST | Frontend’den gelen isteği acquirer’a iletir. |
+| `/pos-client/stream` | GET | SSE üzerinden canlı senaryo akışı. |
 
-**Fraud Engine**
-*   probability score
-*   riskLevel
-*   model vs fallback ayrımı
-*   Aksiyon: gauge/bar animasyonu (0 → skor)
+### 7.3 Fraud Agent
+| Endpoint | Method | Açıklama |
+| --- | --- | --- |
+| `/predict` | POST | Fraud skoru üretir. |
+| `/health` | GET | Model durumunu döndürür. |
 
-**Decision & Persistence**
-*   APPROVED / PENDING / DECLINED badge
-*   "transaction_history insert" log satırı
-*   (Opsiyonel) "user_profile update" log satırı
+## 8) Konfigürasyonlar
+
+* **Acquirer:** `server.port=8443`, mTLS zorunlu, HMAC secret `security.hmac.secret`.
+* **POS Client:** acquirer base URL `https://localhost:8443`, HMAC secret `security.hmac.secret`.
+* **Fraud Agent:** Varsayılan `http://localhost:8000`.
+
+## 9) Çalıştırma Senaryosu (Özet)
+
+Detaylı demo akışı `DEMO.md` dosyasında yer alır.
+
+1. PostgreSQL başlatılır.
+2. Fraud Agent `python fraud_api.py` ile ayağa kaldırılır.
+3. Acquirer `./gradlew bootRun` ile çalıştırılır.
+4. POS client `./gradlew bootRun` ile çalıştırılır.
+5. Frontend `npm run dev` ile açılır.
+
+## 10) UI Senaryo Akışı
+
+`demo_scenarios.json` dosyasında UI için önceden tanımlanmış senaryolar ve state machine bilgisi bulunur.
 
 ---
 
-## 7. Sahtecilik Tespit Sistemi (Fraud Detection)
-
-Bu modül, basit kurallar (if-else) yerine istatistiksel modeller kullanır.
-
-*   **Algoritma:** XGBoost (Extreme Gradient Boosting). Hızlı ve yüksek başarımlı bir ağaç tabanlı modeldir.
-*   **Girdiler (Features):**
-    *   İşlem Tutarı
-    *   Kullanıcı Yaşı
-    *   Mesafe (Kullanıcı evi ile mağaza arası)
-    *   Zaman (Gece yarısı yapılan işlemler daha risklidir)
-    *   Kategori Risk Faktörü
-
----
-
-## 8. Kurulum ve Çalıştırma
-
-Sistemi yerel ortamınızda çalıştırmak için aşağıdaki adımları izleyin.
-
-### 8.1. Ön Gereksinimler
-*   Java 17 veya üzeri JDK
-*   Python 3.10+
-*   Docker Desktop (PostgreSQL için)
-*   Git
-
-### 8.2. Adım Adım Kurulum
-
-**1. Veritabanını Başlatın:**
-```bash
-docker run -d --name pos-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pos_payment postgres:15
-```
-
-**2. Fraud Agent'ı (Python) Çalıştırın:**
-```bash
-cd fraudAgent
-python -m venv .venv
-.\.venv\Scripts\Activate  # Windows için
-pip install -r requirements.txt
-python fraud_api.py
-```
-*(Bu servis 8000 portunda çalışacaktır)*
-
-**3. Acquirer Server'ı (Java) Çalıştırın:**
-Yeni bir terminal açın ve:
-```bash
-cd acquirer-server
-.\gradlew bootRun
-```
-*(Bu servis 8443 portunda çalışacaktır)*
-
-**4. Test Etme:**
-`DEMO.md` dosyasındaki örnek `curl` komutlarını kullanarak sisteme istek gönderebilir ve sonuçları gözlemleyebilirsiniz.
-
----
-
-## Sonuç
-
-Secure POS Payment Channel projesi, güvenli ve zeki ödeme sistemlerinin nasıl kurgulanabileceğine dair modern bir örnektir. Mikroservis mimarisi, veri odaklı karar verme mekanizmaları ve güçlü teknoloji altyapısı ile ölçeklenebilir bir temel sunar.
+Bu rapor; kod tabanı, konfigürasyonlar ve demo verilerinin tamamı üzerinden oluşturulmuştur.
